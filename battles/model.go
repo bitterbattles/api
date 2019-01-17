@@ -8,5 +8,5 @@ type Battle struct {
 	Description  string `json:"description"`
 	VotesFor     int    `json:"votesFor"`
 	VotesAgainst int    `json:"votesAgainst"`
-	CreatedOn    uint64 `json:"createdOn"`
+	CreatedOn    int64  `json:"createdOn"`
 }

@@ -1,5 +1,10 @@
 package battles
 
+import (
+	"github.com/bitterbattles/api/battles/errors"
+	coreErrors "github.com/bitterbattles/api/core/errors"
+)
+
 // GetRequest represents a GET request
 type GetRequest struct {
 	Sort     string `json:"sort"`
@@ -15,7 +20,7 @@ type GetResponse struct {
 	Description  string `json:"description"`
 	VotesFor     int    `json:"votesFor"`
 	VotesAgainst int    `json:"votesAgainst"`
-	CreatedOn    uint64 `json:"createdOn"`
+	CreatedOn    int64  `json:"createdOn"`
 }
 
 // PostRequest represents a POST request
@@ -40,19 +45,24 @@ func (controller *Controller) HandleGet(request GetRequest) ([]GetResponse, erro
 	if err != nil {
 		return nil, err
 	}
-	return controller.toGetResponse(battles), nil
+	count := len(battles)
+	response := make([]GetResponse, count)
+	for i := 0; i < count; i++ {
+		response[i] = GetResponse(*battles[i])
+	}
+	return response, nil
 }
 
 // HandlePost handles POST requests
 func (controller *Controller) HandlePost(request PostRequest) error {
-	_, err := controller.manager.Create(request.Title, request.Description)
-	return err
-}
-
-func (*Controller) toGetResponse(battles []*Battle) []GetResponse {
-	results := make([]GetResponse, 0, len(battles))
-	for _, battle := range battles {
-		results = append(results, GetResponse(*battle))
+	err := controller.manager.Create(request.Title, request.Description)
+	if err != nil {
+		if _, ok := err.(errors.InvalidTitleError); ok {
+			return coreErrors.NewBadRequestError(err.Error())
+		} else if _, ok := err.(errors.InvalidDescriptionError); ok {
+			return coreErrors.NewBadRequestError(err.Error())
+		}
+		return err
 	}
-	return results
+	return nil
 }

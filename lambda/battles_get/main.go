@@ -1,14 +1,15 @@
 package main
 
 import (
-	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/bitterbattles/api/battles"
+	"github.com/bitterbattles/api/lambda"
 )
 
 func main() {
 	index := battles.NewIndex()
-	table := battles.NewTable()
-	manager := battles.NewManager(index, table)
+	repository := battles.NewRepository()
+	manager := battles.NewManager(index, repository)
 	controller := battles.NewController(manager)
-	lambda.Start(controller.HandleGet)
+	handler := lambda.NewHandler(controller.HandleGet)
+	handler.Run()
 }

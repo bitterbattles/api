@@ -1,15 +1,15 @@
 package main
 
 import (
-	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/bitterbattles/api/battles"
-	"github.com/bitterbattles/api/mocks"
+	"github.com/bitterbattles/api/lambda"
 )
 
 func main() {
-	index := mocks.NewMockIndex()
-	table := mocks.NewMockTable()
-	manager := battles.NewManager(index, table)
+	index := battles.NewIndex()
+	repository := battles.NewRepository()
+	manager := battles.NewManager(index, repository)
 	controller := battles.NewController(manager)
-	lambda.Start(controller.HandlePost)
+	handler := lambda.NewHandler(controller.HandlePost)
+	handler.Run()
 }

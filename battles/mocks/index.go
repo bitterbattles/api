@@ -1,17 +1,17 @@
 package mocks
 
-// MockIndex is a mock implementation of battles.IndexInterface
-type MockIndex struct {
+// Index is a mocked implementation of battles.IndexInterface
+type Index struct {
 	data map[string]*[]string
 }
 
-// NewMockIndex creates a new MockIndex instance
-func NewMockIndex() *MockIndex {
-	return &MockIndex{make(map[string]*[]string)}
+// NewIndex creates a new Index instance
+func NewIndex() *Index {
+	return &Index{make(map[string]*[]string)}
 }
 
 // Add adds a value to the given index
-func (index *MockIndex) Add(indexName string, value string) error {
+func (index *Index) Add(indexName string, value string) error {
 	values := index.data[indexName]
 	var newValues []string
 	if values == nil {
@@ -25,7 +25,7 @@ func (index *MockIndex) Add(indexName string, value string) error {
 }
 
 // GetRange gets a page of values from the index
-func (index *MockIndex) GetRange(indexName string, offset int, limit int) ([]string, error) {
+func (index *Index) GetRange(indexName string, offset int, limit int) ([]string, error) {
 	_, ok := index.data[indexName]
 	if !ok {
 		return []string{}, nil
@@ -44,6 +44,6 @@ func (index *MockIndex) GetRange(indexName string, offset int, limit int) ([]str
 }
 
 // Reset removes all data from the index
-func (index *MockIndex) Reset() {
+func (index *Index) Reset() {
 	index.data = make(map[string]*[]string)
 }
