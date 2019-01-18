@@ -7,55 +7,65 @@ import (
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/bitterbattles/api/core/errors"
+	"github.com/bitterbattles/api/core/loggers"
 )
 
 // Handler represents a lambda handler
 type Handler struct {
 	function interface{}
+	logger   loggers.LoggerInterface
 }
 
 // NewHandler creates a new handler instance
-func NewHandler(function interface{}) *Handler {
-	return &Handler{function}
+func NewHandler(function interface{}, logger loggers.LoggerInterface) *Handler {
+	return &Handler{function, logger}
 }
 
 // Invoke processes the request and creates the response
 func (handler Handler) Invoke(context context.Context, requestBytes []byte) ([]byte, error) {
 	// TODO: Catch panics with defer/recover
 	if handler.function == nil {
-		return internalError("Missing function.", nil)
+		return handler.internalError("Missing function.", nil)
 	}
 	functionType := reflect.TypeOf(handler.function)
 	if functionType.Kind() != reflect.Func {
-		return internalError("Unexpected function type.", nil)
+		return handler.internalError("Unexpected function type.", nil)
 	}
 	if functionType.NumIn() != 1 {
-		return internalError("Unexpected number of arguments in function.", nil)
+		return handler.internalError("Unexpected number of arguments in function.", nil)
 	}
 	request := reflect.New(functionType.In(0))
 	err := json.Unmarshal(requestBytes, request.Interface())
 	if err != nil {
-		return internalError("Failed to decode request JSON.", err)
+		return handler.internalError("Failed to decode request JSON.", err)
 	}
 	args := []reflect.Value{request.Elem()}
-	callReturn := reflect.ValueOf(handler.function).Call(args)
-	if len(callReturn) != 2 {
-		return internalError("Unexpected number of return values from handler.", nil)
+	returnArgs := reflect.ValueOf(handler.function).Call(args)
+	numReturnArgs := len(returnArgs)
+	if !(numReturnArgs == 1 || numReturnArgs == 2) {
+		return handler.internalError("Unexpected number of return values from handler.", nil)
 	}
-	var callError = callReturn[1].Interface()
+	var returnArg = returnArgs[numReturnArgs-1].Interface()
 	var response interface{}
-	if callError != nil {
-		httpError, ok := callError.(errors.HTTPError)
+	if returnArg != nil {
+		returnError, ok := returnArg.(error)
 		if !ok {
-			return internalError("Handler returned an unexpected error.", err)
+			return handler.internalError("Unexpected non-error return value.", nil)
+		}
+		httpError, ok := returnArg.(errors.HTTPError)
+		if !ok {
+			return handler.internalError("Handler returned an unexpected error.", returnError)
 		}
 		response = httpError
-	} else {
-		response = callReturn[0].Interface()
+	} else if numReturnArgs == 2 {
+		response = returnArgs[0].Interface()
 	}
-	responseBytes, err := json.Marshal(response)
-	if err != nil {
-		return internalError("Failed to encode response JSON.", err)
+	var responseBytes []byte
+	if response != nil {
+		responseBytes, err = json.Marshal(response)
+		if err != nil {
+			return handler.internalError("Failed to encode response JSON.", err)
+		}
 	}
 	return responseBytes, nil
 }
@@ -65,8 +75,8 @@ func (handler Handler) Run() {
 	lambda.StartHandler(handler)
 }
 
-func internalError(message string, err error) ([]byte, error) {
-	// TODO: Log message and error
+func (handler Handler) internalError(message string, err error) ([]byte, error) {
+	handler.logger.Error(message, err)
 	response := errors.NewInternalServerError()
 	return json.Marshal(response)
 }
