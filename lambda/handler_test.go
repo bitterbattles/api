@@ -101,13 +101,14 @@ func TestBadErrorType(t *testing.T) {
 
 func TestUnepectedError(t *testing.T) {
 	reset()
-	function := func(request request) (response, error) { return response{}, errors.New("error") }
+	expectedErr := errors.New("error")
+	function := func(request request) (response, error) { return response{}, expectedErr }
 	handler := lambda.NewHandler(function, logger)
 	response := invoke(t, handler, requestJSON)
 	tests.AssertEquals(t, response, internalError)
 	message, err := logger.GetLastEntry()
 	tests.AssertNotNil(t, message)
-	tests.AssertNotNil(t, err)
+	tests.AssertEquals(t, err, expectedErr)
 }
 
 func TestExpectedError(t *testing.T) {
@@ -122,6 +123,20 @@ func TestExpectedError(t *testing.T) {
 	message, err := logger.GetLastEntry()
 	tests.AssertNil(t, message)
 	tests.AssertNil(t, err)
+}
+
+func TestPanic(t *testing.T) {
+	reset()
+	expectedErr := errors.New("error")
+	function := func(request request) (response, error) {
+		panic(expectedErr)
+	}
+	handler := lambda.NewHandler(function, logger)
+	response := invoke(t, handler, requestJSON)
+	tests.AssertEquals(t, response, internalError)
+	message, err := logger.GetLastEntry()
+	tests.AssertNil(t, message)
+	tests.AssertEquals(t, err, expectedErr)
 }
 
 func TestSuccess(t *testing.T) {

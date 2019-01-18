@@ -22,8 +22,13 @@ func NewHandler(function interface{}, logger loggers.LoggerInterface) *Handler {
 }
 
 // Invoke processes the request and creates the response
-func (handler Handler) Invoke(context context.Context, requestBytes []byte) ([]byte, error) {
-	// TODO: Catch panics with defer/recover
+func (handler Handler) Invoke(context context.Context, requestBytes []byte) (responseBytes []byte, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err, _ := r.(error)
+			responseBytes, err = handler.internalError("Unexpected panic.", err)
+		}
+	}()
 	if handler.function == nil {
 		return handler.internalError("Missing function.", nil)
 	}
@@ -35,7 +40,7 @@ func (handler Handler) Invoke(context context.Context, requestBytes []byte) ([]b
 		return handler.internalError("Unexpected number of arguments in function.", nil)
 	}
 	request := reflect.New(functionType.In(0))
-	err := json.Unmarshal(requestBytes, request.Interface())
+	err = json.Unmarshal(requestBytes, request.Interface())
 	if err != nil {
 		return handler.internalError("Failed to decode request JSON.", err)
 	}
@@ -60,7 +65,6 @@ func (handler Handler) Invoke(context context.Context, requestBytes []byte) ([]b
 	} else if numReturnArgs == 2 {
 		response = returnArgs[0].Interface()
 	}
-	var responseBytes []byte
 	if response != nil {
 		responseBytes, err = json.Marshal(response)
 		if err != nil {
