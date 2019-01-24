@@ -21,6 +21,7 @@ type Handler struct {
 	*handlers.APIHandler
 	index      battles.IndexInterface
 	repository battles.RepositoryInterface
+	logger     loggers.LoggerInterface
 }
 
 // NewHandler creates a new Handler instance
@@ -28,6 +29,7 @@ func NewHandler(index battles.IndexInterface, repository battles.RepositoryInter
 	handler := Handler{
 		index:      index,
 		repository: repository,
+		logger:     logger,
 	}
 	return handlers.NewAPIHandler(handler.Handle, logger)
 }
@@ -50,7 +52,7 @@ func (handler *Handler) Handle(request *Request) ([]Response, error) {
 		if battle != nil {
 			battles = append(battles, battle)
 		} else {
-			// TODO: Log
+			handler.logger.Error("Failed to find indexed battle with ID "+id+".", nil)
 		}
 	}
 	count := len(battles)

@@ -9,9 +9,10 @@ import (
 
 func main() {
 	session := bootstrap.NewSession()
+	cloudWatchClient := bootstrap.NewCloudWatchClient(session)
 	dynamoClient := bootstrap.NewDynamoClient(session)
 	redisClient := bootstrap.NewRedisClient()
-	logger := loggers.NewCloudWatchLogger()
+	logger := loggers.NewCloudWatchLogger(cloudWatchClient)
 	repository := battles.NewRepository(dynamoClient)
 	index := battles.NewIndex(redisClient)
 	handler := NewHandler(index, repository, logger)

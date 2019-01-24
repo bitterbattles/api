@@ -13,7 +13,7 @@ import (
 func TestHandler(t *testing.T) {
 	repository := mocks.NewRepository()
 	addBattles(repository, 2)
-	handler := NewHandler(repository)
+	handler := NewHandler(repository, nil)
 	eventJSON := `{"records":[{"dynamodb":{"NewImage":{"battleID":{"S":"id0"},"isVoteFor":{"BOOL":true}}}},{"dynamodb":{"NewImage":{"battleID":{"S":"id1"},"isVoteFor":{"BOOL":true}}}},{"dynamodb":{"NewImage":{"battleID":{"S":"id0"},"isVoteFor":{"BOOL":false}}}},{"dynamodb":{"NewImage":{"battleID":{"S":"id0"},"isVoteFor":{"BOOL":true}}}}]}`
 	responseBytes, err := handler.Invoke(nil, []byte(eventJSON))
 	AssertNil(t, responseBytes)

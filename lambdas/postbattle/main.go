@@ -9,8 +9,9 @@ import (
 
 func main() {
 	session := bootstrap.NewSession()
+	cloudWatchClient := bootstrap.NewCloudWatchClient(session)
 	dynamoClient := bootstrap.NewDynamoClient(session)
-	logger := loggers.NewCloudWatchLogger()
+	logger := loggers.NewCloudWatchLogger(cloudWatchClient)
 	repository := battles.NewRepository(dynamoClient)
 	handler := NewHandler(repository, logger)
 	lambda.StartHandler(handler)
