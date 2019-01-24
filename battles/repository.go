@@ -1,65 +1,88 @@
 package battles
 
+import (
+	"fmt"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+)
+
+const (
+	tableName   = "battles"
+	idFieldName = "id"
+)
+
 // RepositoryInterface defines an interface for a Battle repository
 type RepositoryInterface interface {
 	Add(Battle) error
 	GetByID(string) (*Battle, error)
+	IncrementVotes(string, int, int) error
 }
 
 // Repository is an implementation of RepositoryInterface using DynamoDB
 type Repository struct {
-	// client *dynamodb.DynamoDB
+	client *dynamodb.DynamoDB
 }
 
 // NewRepository creates a new Battles repository instance
-func NewRepository( /*client *dynamodb.DynamoDB*/ ) *Repository {
-	return &Repository{ /*client*/ }
+func NewRepository(client *dynamodb.DynamoDB) *Repository {
+	return &Repository{client}
 }
 
 // Add is used to insert a new Battle document
 func (repository *Repository) Add(battle Battle) error {
-	// item, err := repository.toMap(battle)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// _, err = repository.client.PutItem(&dynamodb.PutItemInput{
-	// 	Item:      item,
-	// 	TableName: aws.String(tableName),
-	// })
-	// return err
-	return nil
+	item, err := dynamodbattribute.MarshalMap(battle)
+	if err != nil {
+		return err
+	}
+	_, err = repository.client.PutItem(&dynamodb.PutItemInput{
+		Item:      item,
+		TableName: aws.String(tableName),
+	})
+	return err
 }
 
 // GetByID is used to get a Battle by ID
 func (repository *Repository) GetByID(id string) (*Battle, error) {
-	// result, err := repository.client.GetItem(&dynamodb.GetItemInput{
-	// 	TableName: aws.String(tableName),
-	// 	Key: map[string]*dynamodb.AttributeValue{
-	// 		"id": {
-	// 			S: aws.String(id),
-	// 		},
-	// 	},
-	// })
-	// battle, err := repository.toBattle(result)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	return nil, nil
+	result, err := repository.client.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			idFieldName: {
+				S: aws.String(id),
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	battle := Battle{}
+	err = dynamodbattribute.UnmarshalMap(result.Item, &battle)
+	if err != nil {
+		return nil, err
+	}
+	return &battle, nil
 }
 
-// func (repository *Repository) toBattle(item map[string]*dynamodb.AttributeValue) (Battle, error) {
-// 	battle := Battle{}
-// 	err := dynamodbattribute.UnmarshalMap(item, &battle)
-// 	if err != nil {
-// 		return Battle{}, err
-// 	}
-// 	return battle, nil
-// }
-//
-// func (repository *Repository) toMap(battle Battle) (map[string]*dynamodb.AttributeValue, error) {
-// 	item, err := dynamodbattribute.MarshalMap(battle)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return item, nil
-// }
+// IncrementVotes increments the votes for a given Battle ID
+func (repository *Repository) IncrementVotes(id string, deltaVotesFor int, deltaVotesAgainst int) error {
+	updateExpression := "ADD votesFor :deltaVotesFor, votesAgainst :deltaVotesAgainst"
+	_, err := repository.client.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			idFieldName: {
+				S: aws.String(id),
+			},
+		},
+		UpdateExpression: &updateExpression,
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":deltaVotesFor": {
+				N: aws.String(fmt.Sprintf("%d", deltaVotesFor)),
+			},
+			":deltaVotesAgainst": {
+				N: aws.String(fmt.Sprintf("%d", deltaVotesAgainst)),
+			},
+		},
+	})
+	return err
+}
