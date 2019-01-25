@@ -95,7 +95,7 @@ func addBattles(index *mocks.Index, repository *mocks.Repository, indexName stri
 }
 
 func testHandler(t *testing.T, index *mocks.Index, repository *mocks.Repository, sort string, page int, pageSize int, expectedResponse string) {
-	handler := NewHandler(index, repository, nil)
+	handler := NewHandler(index, repository)
 	request := Request{
 		Sort:     sort,
 		Page:     page,

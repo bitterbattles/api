@@ -12,7 +12,7 @@ import (
 
 func TestHandler(t *testing.T) {
 	index := mocks.NewIndex()
-	handler := NewHandler(index, nil)
+	handler := NewHandler(index)
 	eventJSON := `{"records":[{"dynamodb":{"NewImage":{"id":{"S":"id0"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"123"}}}},{"dynamodb":{"NewImage":{"id":{"S":"id1"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"456"}}}},{"dynamodb":{"OldImage":{"id":{"S":"id0"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"123"}},"NewImage":{"id":{"S":"id0"},"votesFor":{"N":"10"},"votesAgainst":{"N":"5"},"createdOn":{"N":"123"}}}},{"dynamodb":{"OldImage":{"id":{"S":"id1"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"456"}},"NewImage":{"id":{"S":"id1"},"votesFor":{"N":"20"},"votesAgainst":{"N":"21"},"createdOn":{"N":"456"}}}}]}`
 	responseBytes, err := handler.Invoke(nil, []byte(eventJSON))
 	AssertNil(t, responseBytes)

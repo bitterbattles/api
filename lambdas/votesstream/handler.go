@@ -1,24 +1,23 @@
 package votesstream
 
 import (
+	"log"
+
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/bitterbattles/api/battles"
 	"github.com/bitterbattles/api/common/handlers"
-	"github.com/bitterbattles/api/common/loggers"
 	"github.com/bitterbattles/api/votes"
 )
 
 // Handler represents a stream handler
 type Handler struct {
 	repository battles.RepositoryInterface
-	logger     loggers.LoggerInterface
 }
 
 // NewHandler creates a new Handler instance
-func NewHandler(repository battles.RepositoryInterface, logger loggers.LoggerInterface) *handlers.StreamHandler {
+func NewHandler(repository battles.RepositoryInterface) *handlers.StreamHandler {
 	handler := Handler{
 		repository: repository,
-		logger:     logger,
 	}
 	return handlers.NewStreamHandler(&handler)
 }
@@ -32,7 +31,7 @@ func (handler *Handler) Handle(event *handlers.DynamoEvent) error {
 	for battleID, change := range changes {
 		err := handler.repository.IncrementVotes(battleID, change.deltaVotesFor, change.deltaVotesAgainst)
 		if err != nil {
-			handler.logger.Error("Failed to increment votes for battle ID "+battleID+".", err)
+			log.Println("Failed to increment votes for battle ID", battleID, ".")
 		}
 	}
 	return nil
@@ -43,7 +42,7 @@ func (handler *Handler) captureChange(record *handlers.DynamoEventRecord, change
 	vote := votes.Vote{}
 	err = dynamodbattribute.UnmarshalMap(record.Change.NewImage, &vote)
 	if err != nil {
-		handler.logger.Error("Failed to unmarshal new image in DynamoDB event.", err)
+		log.Println("Failed to unmarshal new image in DynamoDB event. Error:", err)
 		return
 	}
 	battleID := vote.BattleID

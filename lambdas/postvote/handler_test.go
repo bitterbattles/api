@@ -20,7 +20,7 @@ func TestHandler(t *testing.T) {
 
 func testHandler(t *testing.T, battleID string, isVoteFor bool, expectedResponse string, expectedSuccess bool) {
 	repository := mocks.NewRepository()
-	handler := NewHandler(repository, nil)
+	handler := NewHandler(repository)
 	request := Request{
 		BattleID:  battleID,
 		IsVoteFor: isVoteFor,

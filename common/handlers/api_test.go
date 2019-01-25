@@ -6,7 +6,6 @@ import (
 
 	commonErrors "github.com/bitterbattles/api/common/errors"
 	. "github.com/bitterbattles/api/common/handlers"
-	"github.com/bitterbattles/api/common/loggers/mocks"
 	. "github.com/bitterbattles/api/common/tests"
 )
 
@@ -30,88 +29,68 @@ func apiHandlerFunction(request *request) (*response, error) {
 }
 
 func TestAPIHandlerNilFunction(t *testing.T) {
-	logger := mocks.NewLogger()
-	handler := NewAPIHandler(nil, logger)
+	handler := NewAPIHandler(nil)
 	testAPIHandler(t, handler, requestJSON, internalErrorResponse)
-	validateLogger(t, logger, true, false, nil)
 }
 
 func TestAPIHandlerBadFunctionType(t *testing.T) {
-	logger := mocks.NewLogger()
-	handler := NewAPIHandler(1, logger)
+	handler := NewAPIHandler(1)
 	testAPIHandler(t, handler, requestJSON, internalErrorResponse)
-	validateLogger(t, logger, true, false, nil)
 }
 
 func TestAPIHandlerTooManyInputParams(t *testing.T) {
-	logger := mocks.NewLogger()
 	function := func(a int, b int) {}
-	handler := NewAPIHandler(function, logger)
+	handler := NewAPIHandler(function)
 	testAPIHandler(t, handler, requestJSON, internalErrorResponse)
-	validateLogger(t, logger, true, false, nil)
 }
 
 func TestAPIHandlerBadRequestJSON(t *testing.T) {
-	logger := mocks.NewLogger()
-	handler := NewAPIHandler(apiHandlerFunction, logger)
+	handler := NewAPIHandler(apiHandlerFunction)
 	expectedResponse := `{"statusCode":400,"message":"Failed to decode request JSON."}`
 	testAPIHandler(t, handler, "notjson", expectedResponse)
-	validateLogger(t, logger, true, false, nil)
 }
 
 func TestAPIHandlerTooFewReturnParams(t *testing.T) {
-	logger := mocks.NewLogger()
 	function := func(request request) {}
-	handler := NewAPIHandler(function, logger)
+	handler := NewAPIHandler(function)
 	testAPIHandler(t, handler, requestJSON, internalErrorResponse)
-	validateLogger(t, logger, true, false, nil)
 }
 
 func TestAPIHandlerBadErrorType(t *testing.T) {
-	logger := mocks.NewLogger()
 	function := func(request request) response { return response{} }
-	handler := NewAPIHandler(function, logger)
+	handler := NewAPIHandler(function)
 	testAPIHandler(t, handler, requestJSON, internalErrorResponse)
-	validateLogger(t, logger, true, false, nil)
 }
 
 func TestAPIHandlerUnexpectedError(t *testing.T) {
-	logger := mocks.NewLogger()
 	expectedErr := errors.New("error")
 	function := func(request request) (response, error) { return response{}, expectedErr }
-	handler := NewAPIHandler(function, logger)
+	handler := NewAPIHandler(function)
 	testAPIHandler(t, handler, requestJSON, internalErrorResponse)
-	validateLogger(t, logger, true, true, expectedErr)
 }
 
 func TestAPIHandlerExpectedError(t *testing.T) {
-	logger := mocks.NewLogger()
 	function := func(request request) (response, error) {
 		return response{}, commonErrors.NewBadRequestError("badrequest")
 	}
-	handler := NewAPIHandler(function, logger)
+	handler := NewAPIHandler(function)
 	expectedResponse := `{"statusCode":400,"message":"badrequest"}`
 	testAPIHandler(t, handler, requestJSON, expectedResponse)
-	validateLogger(t, logger, false, false, nil)
 }
 
 func TestAPIHandlerPanic(t *testing.T) {
-	logger := mocks.NewLogger()
 	expectedErr := errors.New("error")
 	function := func(request request) (response, error) {
 		panic(expectedErr)
 	}
-	handler := NewAPIHandler(function, logger)
+	handler := NewAPIHandler(function)
 	testAPIHandler(t, handler, requestJSON, internalErrorResponse)
-	validateLogger(t, logger, false, true, expectedErr)
 }
 
 func TestAPIHandlerSuccess(t *testing.T) {
-	logger := mocks.NewLogger()
-	handler := NewAPIHandler(apiHandlerFunction, logger)
+	handler := NewAPIHandler(apiHandlerFunction)
 	expectedResponse := `{"key1":false,"key2":"val2","key3":3}`
 	testAPIHandler(t, handler, requestJSON, expectedResponse)
-	validateLogger(t, logger, false, false, nil)
 }
 
 func testAPIHandler(t *testing.T, handler *APIHandler, requestJSON string, expectedResponse string) {
@@ -120,19 +99,4 @@ func testAPIHandler(t *testing.T, handler *APIHandler, requestJSON string, expec
 	AssertNil(t, err)
 	response := string(responseBytes)
 	AssertEquals(t, response, expectedResponse)
-}
-
-func validateLogger(t *testing.T, logger *mocks.Logger, nonNilMessage bool, nonNilError bool, expectedError error) {
-	message, err := logger.GetLastEntry()
-	if nonNilMessage {
-		AssertNotNil(t, message)
-	} else {
-		AssertNil(t, message)
-	}
-	if nonNilError {
-		AssertNotNil(t, err)
-		AssertEquals(t, err, expectedError)
-	} else {
-		AssertNil(t, err)
-	}
 }

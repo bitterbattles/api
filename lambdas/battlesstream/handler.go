@@ -1,10 +1,9 @@
 package battlesstream
 
 import (
+	"log"
 	"math"
 	"time"
-
-	"github.com/bitterbattles/api/common/loggers"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/bitterbattles/api/battles"
@@ -13,15 +12,13 @@ import (
 
 // Handler represents a stream handler
 type Handler struct {
-	index  battles.IndexInterface
-	logger loggers.LoggerInterface
+	index battles.IndexInterface
 }
 
 // NewHandler creates a new Handler instance
-func NewHandler(index battles.IndexInterface, logger loggers.LoggerInterface) *handlers.StreamHandler {
+func NewHandler(index battles.IndexInterface) *handlers.StreamHandler {
 	handler := Handler{
-		index:  index,
-		logger: logger,
+		index: index,
 	}
 	return handlers.NewStreamHandler(&handler)
 }
@@ -43,13 +40,13 @@ func (handler *Handler) captureChange(record *handlers.DynamoEventRecord, change
 	oldBattle := battles.Battle{}
 	err = dynamodbattribute.UnmarshalMap(record.Change.OldImage, &oldBattle)
 	if err != nil {
-		handler.logger.Error("Failed to unmarshal old image in DynamoDB event.", err)
+		log.Println("Failed to unmarshal old image in DynamoDB event. Error:", err)
 		return
 	}
 	newBattle := battles.Battle{}
 	err = dynamodbattribute.UnmarshalMap(record.Change.NewImage, &newBattle)
 	if err != nil {
-		handler.logger.Error("Failed to unmarshal new image in DynamoDB event.", err)
+		log.Println("Failed to unmarshal new image in DynamoDB event. Error:", err)
 		return
 	}
 	c := changes[newBattle.ID]
@@ -75,19 +72,19 @@ func (handler *Handler) processChange(battleID string, change *change) {
 		score = handler.calculateRecency(change.newCreatedOn)
 		err = handler.index.Set(battles.RecentSort, battleID, score)
 		if err != nil {
-			handler.logger.Error("Failed to set value in "+battles.RecentSort+" index.", err)
+			log.Println("Failed to set value in", battles.RecentSort, "index. Error:", err)
 		}
 	}
 	if change.votesChanged {
 		score = handler.calculatePopularity(change.newVotesFor, change.newVotesAgainst)
 		err = handler.index.Set(battles.PopularSort, battleID, score)
 		if err != nil {
-			handler.logger.Error("Failed to set value in "+battles.PopularSort+" index.", err)
+			log.Println("Failed to set value in", battles.PopularSort, "index. Error:", err)
 		}
 		score = handler.calculateControversy(change.newVotesFor, change.newVotesAgainst)
 		err = handler.index.Set(battles.ControversialSort, battleID, score)
 		if err != nil {
-			handler.logger.Error("Failed to set value in "+battles.ControversialSort+" index.", err)
+			log.Println("Failed to set value in", battles.ControversialSort, "index. Error:", err)
 		}
 	}
 }

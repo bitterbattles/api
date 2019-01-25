@@ -1,10 +1,11 @@
 package getbattles
 
 import (
+	"log"
+
 	"github.com/bitterbattles/api/battles"
 	"github.com/bitterbattles/api/common/handlers"
 	"github.com/bitterbattles/api/common/input"
-	"github.com/bitterbattles/api/common/loggers"
 )
 
 const (
@@ -21,17 +22,15 @@ type Handler struct {
 	*handlers.APIHandler
 	index      battles.IndexInterface
 	repository battles.RepositoryInterface
-	logger     loggers.LoggerInterface
 }
 
 // NewHandler creates a new Handler instance
-func NewHandler(index battles.IndexInterface, repository battles.RepositoryInterface, logger loggers.LoggerInterface) *handlers.APIHandler {
+func NewHandler(index battles.IndexInterface, repository battles.RepositoryInterface) *handlers.APIHandler {
 	handler := Handler{
 		index:      index,
 		repository: repository,
-		logger:     logger,
 	}
-	return handlers.NewAPIHandler(handler.Handle, logger)
+	return handlers.NewAPIHandler(handler.Handle)
 }
 
 // Handle handles a request
@@ -52,7 +51,7 @@ func (handler *Handler) Handle(request *Request) ([]Response, error) {
 		if battle != nil {
 			battles = append(battles, battle)
 		} else {
-			handler.logger.Error("Failed to find indexed battle with ID "+id+".", nil)
+			log.Println("Failed to find battle ID", id, "referenced in", sort, "index.")
 		}
 	}
 	count := len(battles)

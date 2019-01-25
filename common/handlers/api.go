@@ -3,21 +3,20 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"reflect"
 
 	"github.com/bitterbattles/api/common/errors"
-	"github.com/bitterbattles/api/common/loggers"
 )
 
 // APIHandler represents a lambda handler for API requests
 type APIHandler struct {
 	handleFunc interface{}
-	logger     loggers.LoggerInterface
 }
 
 // NewAPIHandler creates a new APIHandler instance
-func NewAPIHandler(handleFunc interface{}, logger loggers.LoggerInterface) *APIHandler {
-	return &APIHandler{handleFunc, logger}
+func NewAPIHandler(handleFunc interface{}) *APIHandler {
+	return &APIHandler{handleFunc}
 }
 
 // Invoke handles a request
@@ -79,9 +78,7 @@ func (handler APIHandler) badRequestError(message string) ([]byte, error) {
 }
 
 func (handler APIHandler) internalError(message string, err error) ([]byte, error) {
-	if handler.logger != nil {
-		handler.logger.Error(message, err)
-	}
+	log.Println(message, "Error:", err)
 	response := errors.NewInternalServerError()
 	return json.Marshal(response)
 }

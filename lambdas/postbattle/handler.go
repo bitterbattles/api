@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/bitterbattles/api/common/handlers"
-	"github.com/bitterbattles/api/common/loggers"
 
 	"github.com/bitterbattles/api/battles"
 	"github.com/bitterbattles/api/common/errors"
@@ -25,11 +24,11 @@ type Handler struct {
 }
 
 // NewHandler creates a new Handler instance
-func NewHandler(repository battles.RepositoryInterface, logger loggers.LoggerInterface) *handlers.APIHandler {
+func NewHandler(repository battles.RepositoryInterface) *handlers.APIHandler {
 	handler := Handler{
 		repository: repository,
 	}
-	return handlers.NewAPIHandler(handler.Handle, logger)
+	return handlers.NewAPIHandler(handler.Handle)
 }
 
 // Handle handles a request

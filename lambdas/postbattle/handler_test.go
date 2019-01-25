@@ -37,7 +37,7 @@ func TestHandler(t *testing.T) {
 
 func testHandler(t *testing.T, title string, description string, expectedResponse string, expectedSuccess bool) {
 	repository := mocks.NewRepository()
-	handler := NewHandler(repository, nil)
+	handler := NewHandler(repository)
 	request := Request{
 		Title:       title,
 		Description: description,
