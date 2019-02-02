@@ -153,26 +153,32 @@ Resources:
                   - dynamodb:GetShardIterator
                   - dynamodb:GetRecords
                 Resource: "*"
-  # BattlesGetLambda:
-  #   Type: AWS::Lambda::Function
-  #   Properties:
-  #     FunctionName: battles-get
-  #     Code:
-  #       S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
-  #       S3Key: battles-get.zip
-  #     Runtime: go1.x
-  #     Handler: battles-get
-  #     Role: !GetAtt LambdaRole.Arn
-  # BattlesPostLambda:
-  #   Type: AWS::Lambda::Function
-  #   Properties:
-  #     FunctionName: battles-post
-  #     Code:
-  #       S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
-  #       S3Key: battles-post.zip
-  #     Runtime: go1.x
-  #     Handler: battles-post
-  #     Role: !GetAtt LambdaRole.Arn
+  BattlesGetLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: battles-get
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: battles-get.zip
+      Runtime: go1.x
+      Handler: battles-get
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          AWS_REGION: !Ref AWS::Region
+  BattlesPostLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: battles-post
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: battles-post.zip
+      Runtime: go1.x
+      Handler: battles-post
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          AWS_REGION: !Ref AWS::Region
   BattlesStreamLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -183,26 +189,35 @@ Resources:
       Runtime: go1.x
       Handler: battles-stream
       Role: !GetAtt LambdaRole.Arn
-  # VotesPostLambda:
-  #   Type: AWS::Lambda::Function
-  #   Properties:
-  #     FunctionName: votes-post
-  #     Code:
-  #       S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
-  #       S3Key: votes-post.zip
-  #     Runtime: go1.x
-  #     Handler: votes-post
-  #     Role: !GetAtt LambdaRole.Arn
-  # VotesStreamLambda:
-  #   Type: AWS::Lambda::Function
-  #   Properties:
-  #     FunctionName: votes-stream
-  #     Code:
-  #       S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
-  #       S3Key: votes-stream.zip
-  #     Runtime: go1.x
-  #     Handler: votes-stream
-  #     Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          AWS_REGION: !Ref AWS::Region
+  VotesPostLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: votes-post
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: votes-post.zip
+      Runtime: go1.x
+      Handler: votes-post
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          AWS_REGION: !Ref AWS::Region
+  VotesStreamLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: votes-stream
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: votes-stream.zip
+      Runtime: go1.x
+      Handler: votes-stream
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          AWS_REGION: !Ref AWS::Region
   BattlesStreamTrigger:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
@@ -211,14 +226,14 @@ Resources:
       Enabled: true
       BatchSize: !Ref BattlesStreamBatchSize
       StartingPosition: TRIM_HORIZON
-  # VotesStreamTrigger:
-  #   Type: AWS::Lambda::EventSourceMapping
-  #   Properties:
-  #     EventSourceArn: !GetAtt VotesTable.StreamArn
-  #     FunctionName: !GetAtt VotesStreamLambda.Arn
-  #     Enabled: true
-  #     BatchSize: !Ref VotesStreamBatchSize
-  #     StartingPosition: TRIM_HORIZON
+  VotesStreamTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt VotesTable.StreamArn
+      FunctionName: !GetAtt VotesStreamLambda.Arn
+      Enabled: true
+      BatchSize: !Ref VotesStreamBatchSize
+      StartingPosition: TRIM_HORIZON
   # Certificate:
   #   Type: AWS::CertificateManager::Certificate
   #   Properties:
