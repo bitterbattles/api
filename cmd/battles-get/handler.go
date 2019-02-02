@@ -6,6 +6,7 @@ import (
 	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/common/handlers"
 	"github.com/bitterbattles/api/pkg/common/input"
+	"github.com/bitterbattles/api/pkg/ranks"
 )
 
 const (
@@ -20,15 +21,15 @@ const (
 // Handler represents a request handler
 type Handler struct {
 	*handlers.APIHandler
-	index      battles.IndexInterface
-	repository battles.RepositoryInterface
+	ranksRepository   ranks.RepositoryInterface
+	battlesRepository battles.RepositoryInterface
 }
 
 // NewHandler creates a new Handler instance
-func NewHandler(index battles.IndexInterface, repository battles.RepositoryInterface) *handlers.APIHandler {
+func NewHandler(ranksRepository ranks.RepositoryInterface, battlesRepository battles.RepositoryInterface) *handlers.APIHandler {
 	handler := Handler{
-		index:      index,
-		repository: repository,
+		ranksRepository:   ranksRepository,
+		battlesRepository: battlesRepository,
 	}
 	return handlers.NewAPIHandler(handler.Handle)
 }
@@ -51,7 +52,7 @@ func (handler *Handler) Handle(request *Request) ([]Response, error) {
 		if battle != nil {
 			battles = append(battles, battle)
 		} else {
-			log.Println("Failed to find battle ID", id, "referenced in", sort, "index.")
+			log.Println("Failed to find battle ID", id, "referenced in", sort, "ranking.")
 		}
 	}
 	count := len(battles)
@@ -65,15 +66,20 @@ func (handler *Handler) Handle(request *Request) ([]Response, error) {
 func (handler *Handler) getIDs(sort string, page int, pageSize int) ([]string, error) {
 	offset := (page - 1) * pageSize
 	limit := pageSize
-	ids, err := handler.index.GetRange(sort, offset, limit)
+	ranks, err := handler.ranksRepository.GetRange(sort, offset, limit)
 	if err != nil {
 		return nil, err
+	}
+	count := len(ranks)
+	ids := make([]string, count)
+	for i := 0; i < count; i++ {
+		ids[i] = ranks[i].BattleID
 	}
 	return ids, nil
 }
 
 func (handler *Handler) getBattle(id string) (*battles.Battle, error) {
-	battle, err := handler.repository.GetByID(id)
+	battle, err := handler.battlesRepository.GetByID(id)
 	if err != nil {
 		return nil, err
 	}

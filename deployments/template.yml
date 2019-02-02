@@ -15,18 +15,6 @@ Parameters:
   BattlesTableUserIdWCUs:
     Type: Number
     Default: 1
-  RanksTableRCUs:
-    Type: Number
-    Default: 1
-  RanksTableWCUs:
-    Type: Number
-    Default: 1
-  RanksTableBattleIdRCUs:
-    Type: Number
-    Default: 1
-  RanksTableBattleIdWCUs:
-    Type: Number
-    Default: 1
   VotesTableRCUs:
     Type: Number
     Default: 1
@@ -71,38 +59,6 @@ Resources:
             WriteCapacityUnits: !Ref BattlesTableUserIdWCUs
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
-  RanksTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: ranks
-      BillingMode: PROVISIONED
-      ProvisionedThroughput:
-        ReadCapacityUnits: !Ref RanksTableRCUs
-        WriteCapacityUnits: !Ref RanksTableWCUs
-      AttributeDefinitions:
-        - AttributeName: type
-          AttributeType: S
-        - AttributeName: score
-          AttributeType: N
-        - AttributeName: battleId
-          AttributeType: S
-      KeySchema:
-        - AttributeName: type
-          KeyType: HASH
-        - AttributeName: score
-          KeyType: RANGE
-      GlobalSecondaryIndexes:
-        - IndexName: battleId
-          KeySchema:
-            - AttributeName: battleId
-              KeyType: HASH
-            - AttributeName: type
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-          ProvisionedThroughput:
-            ReadCapacityUnits: !Ref RanksTableBattleIdRCUs
-            WriteCapacityUnits: !Ref RanksTableBattleIdWCUs
   VotesTable:
     Type: AWS::DynamoDB::Table
     Properties:

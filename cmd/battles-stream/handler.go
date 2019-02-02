@@ -8,17 +8,18 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/common/handlers"
+	"github.com/bitterbattles/api/pkg/ranks"
 )
 
 // Handler represents a stream handler
 type Handler struct {
-	index battles.IndexInterface
+	repository ranks.RepositoryInterface
 }
 
 // NewHandler creates a new Handler instance
-func NewHandler(index battles.IndexInterface) *handlers.StreamHandler {
+func NewHandler(repository ranks.RepositoryInterface) *handlers.StreamHandler {
 	handler := Handler{
-		index: index,
+		repository: repository,
 	}
 	return handlers.NewStreamHandler(&handler)
 }
@@ -70,21 +71,21 @@ func (handler *Handler) processChange(battleID string, change *change) {
 	var score float64
 	if change.createdOnChanged {
 		score = handler.calculateRecency(change.newCreatedOn)
-		err = handler.index.Set(battles.RecentSort, battleID, score)
+		err = handler.repository.SetScore(battles.RecentSort, battleID, score)
 		if err != nil {
-			log.Println("Failed to set value in", battles.RecentSort, "index. Error:", err)
+			log.Println("Failed to set value in", battles.RecentSort, "ranking. Error:", err)
 		}
 	}
 	if change.votesChanged {
 		score = handler.calculatePopularity(change.newVotesFor, change.newVotesAgainst)
-		err = handler.index.Set(battles.PopularSort, battleID, score)
+		err = handler.repository.SetScore(battles.PopularSort, battleID, score)
 		if err != nil {
-			log.Println("Failed to set value in", battles.PopularSort, "index. Error:", err)
+			log.Println("Failed to set value in", battles.PopularSort, "ranking. Error:", err)
 		}
 		score = handler.calculateControversy(change.newVotesFor, change.newVotesAgainst)
-		err = handler.index.Set(battles.ControversialSort, battleID, score)
+		err = handler.repository.SetScore(battles.ControversialSort, battleID, score)
 		if err != nil {
-			log.Println("Failed to set value in", battles.ControversialSort, "index. Error:", err)
+			log.Println("Failed to set value in", battles.ControversialSort, "ranking. Error:", err)
 		}
 	}
 }

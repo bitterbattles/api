@@ -12,7 +12,7 @@ type Repository struct {
 	lastAdded *battles.Battle
 }
 
-// NewRepository creates a new Battles repository instance
+// NewRepository creates a new Battle repository instance
 func NewRepository() *Repository {
 	return &Repository{make(map[string]*battles.Battle), nil}
 }
