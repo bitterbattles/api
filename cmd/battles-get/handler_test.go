@@ -70,7 +70,7 @@ func TestHandlerBadSort(t *testing.T) {
 	testHandler(t, ranksRepository, battlesRepository, "bad", 1, 1, expectedResponse)
 }
 
-func TestHandlerBadIndexEntry(t *testing.T) {
+func TestHandlerBadRankEntry(t *testing.T) {
 	ranksRepository := ranksMocks.NewRepository()
 	ranksRepository.Upsert(sort, "badId", 0)
 	battlesRepository := battlesMocks.NewRepository()
