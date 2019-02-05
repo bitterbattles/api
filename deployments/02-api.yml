@@ -31,6 +31,16 @@ Resources:
         Type: AWS
         IntegrationHttpMethod: POST
         Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !ImportValue BattlesGetLambdaArn]
+        RequestTemplates:
+          "application/json": "{
+            \"sort\": \"$input.params('sort')\",
+            \"page\": $input.params('page'),
+            \"pageSize\": $input.params('pageSize')
+          }"
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseParameters:
+              "method.request.body": "integration.response.body"
   BattlesPostMethod:
     Type: AWS::ApiGateway::Method
     Properties:

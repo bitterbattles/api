@@ -55,7 +55,8 @@ Resources:
         SecurityGroupIds:
           - !ImportValue SecurityGroupId
       Environment:
-        REDIS_ADDRESS: !ImportValue RedisAddress
+        Variables:
+          REDIS_ADDRESS: !ImportValue RedisAddress
   BattlesPostLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -91,7 +92,8 @@ Resources:
         SecurityGroupIds:
           - !ImportValue SecurityGroupId
       Environment:
-        REDIS_ADDRESS: !ImportValue RedisAddress
+        Variables:
+          REDIS_ADDRESS: !ImportValue RedisAddress
   VotesPostLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -145,7 +147,13 @@ Resources:
 Outputs:
   BattlesGetLambdaArn:
     Value: !GetAtt BattlesGetLambda.Arn
+    Export:
+      Name: BattlesGetLambdaArn
   BattlesPostLambdaArn:
     Value: !GetAtt BattlesPostLambda.Arn
+    Export:
+      Name: BattlesPostLambdaArn
   VotesPostLambdaArn:
     Value: !GetAtt VotesPostLambda.Arn
+    Export:
+      Name: VotesPostLambdaArn

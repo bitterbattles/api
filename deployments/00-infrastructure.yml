@@ -108,12 +108,6 @@ Resources:
     Properties: 
       VpcId: !Ref VPC
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.dynamodb"
-      SubnetIds:
-        - !Ref Subnet0
-        - !Ref Subnet1
-        - !Ref Subnet2
-      SecurityGroupIds:
-        - !GetAtt VPC.DefaultSecurityGroup
   SubnetGroup:
     Type: AWS::ElastiCache::SubnetGroup
     Properties:
@@ -125,7 +119,6 @@ Resources:
   Redis:
     Type: AWS::ElastiCache::ReplicationGroup
     Properties:
-      ReplicationGroupId: cache
       ReplicationGroupDescription: Multi-AZ redis cluster.
       Engine: redis
       CacheNodeType: !Ref RedisNodeType
@@ -141,15 +134,29 @@ Resources:
 Outputs:
   Subnet0Id:
     Value: !Ref Subnet0
+    Export:
+      Name: Subnet0Id
   Subnet1Id:
     Value: !Ref Subnet1
+    Export:
+      Name: Subnet1Id
   Subnet2Id:
     Value: !Ref Subnet2
+    Export:
+      Name: Subnet2Id
   SecurityGroupId:
     Value: !GetAtt VPC.DefaultSecurityGroup
+    Export:
+      Name: SecurityGroupId
   BattlesTableStreamArn:
     Value: !GetAtt BattlesTable.StreamArn
+    Export:
+      Name: BattlesTableStreamArn
   VotesTableStreamArn:
     Value: !GetAtt VotesTable.StreamArn
+    Export:
+      Name: VotesTableStreamArn
   RedisAddress:
-    Value: !GetAtt Redis.PrimaryEndpoint.Address
+    Value: !GetAtt Redis.PrimaryEndPoint.Address
+    Export:
+      Name: RedisAddress
