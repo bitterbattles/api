@@ -72,7 +72,7 @@ func TestHandlerBadSort(t *testing.T) {
 
 func TestHandlerBadRankEntry(t *testing.T) {
 	ranksRepository := ranksMocks.NewRepository()
-	ranksRepository.Upsert(sort, "badId", 0)
+	ranksRepository.SetScore(sort, "badId", 0)
 	battlesRepository := battlesMocks.NewRepository()
 	addBattles(ranksRepository, battlesRepository, sort, 1)
 	expectedResponse := `[{"id":"id0","title":"title0","description":"description0","votesFor":0,"votesAgainst":0,"createdOn":0}]`
@@ -91,7 +91,7 @@ func addBattles(ranksRepository *ranksMocks.Repository, battlesRepository *battl
 			CreatedOn:    int64(i * 3),
 		}
 		battlesRepository.Add(battle)
-		ranksRepository.Upsert(category, battle.ID, uint64(i))
+		ranksRepository.SetScore(category, battle.ID, float64(i))
 	}
 }
 

@@ -9,7 +9,6 @@ import (
 // NewRedisClient creates a new Redis client
 func NewRedisClient() *redis.Client {
 	return redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_ADDRESS"),
-		Password: os.Getenv("REDIS_PASSWORD"),
+		Addr: os.Getenv("REDIS_ADDRESS"),
 	})
 }

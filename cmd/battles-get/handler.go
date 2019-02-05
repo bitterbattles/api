@@ -66,14 +66,9 @@ func (handler *Handler) Handle(request *Request) ([]Response, error) {
 func (handler *Handler) getIDs(sort string, page int, pageSize int) ([]string, error) {
 	offset := (page - 1) * pageSize
 	limit := pageSize
-	ranks, err := handler.ranksRepository.GetRange(sort, offset, limit)
+	ids, err := handler.ranksRepository.GetRankedBattleIDs(sort, offset, limit)
 	if err != nil {
 		return nil, err
-	}
-	count := len(ranks)
-	ids := make([]string, count)
-	for i := 0; i < count; i++ {
-		ids[i] = ranks[i].BattleID
 	}
 	return ids, nil
 }

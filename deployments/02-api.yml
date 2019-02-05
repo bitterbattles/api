@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  EnvName:
+    Type: String
+    Default: dev
+Conditions:
+  IsProd:
+    !Equals [!Ref EnvName, "prod"]
+Resources:
+  API:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: api
+      EndpointConfiguration:
+        Types:
+          - Regional
+  BattlesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !GetAtt API.RootResourceId
+      PathPart: battles
+  BattlesGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref BattlesResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !ImportValue BattlesGetLambdaArn]
+  BattlesPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref BattlesResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !ImportValue BattlesPostLambdaArn]
+  VotesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !GetAtt API.RootResourceId
+      PathPart: votes
+  VotesPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref VotesResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !ImportValue VotesPostLambdaArn]
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !If [IsProd, "api.bitterbattles.com", !Sub "api-${EnvName}.bitterbattles.com"]
+      ValidationMethod: DNS
+  DomainName:
+    Type: AWS::ApiGateway::DomainName
+    Properties: 
+      DomainName: !GetAtt Certificate.DomainName
+      RegionalCertificateArn: !GetAtt Certificate.Arn
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref API
+  Stage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref API
+      DeploymentId: !Ref Deployment
+      StageName: !GetAtt Deployment.StageName
+  BasePath:
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties:
+      BasePath: "/"
+      DomainName: !Ref DomainName
+      RestApiId: !Ref API
+      Stage: !Ref Stage
