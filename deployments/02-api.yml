@@ -13,7 +13,7 @@ Resources:
       Name: api
       EndpointConfiguration:
         Types:
-          - Regional
+          - REGIONAL
   BattlesResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -44,23 +44,24 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !ImportValue BattlesPostLambdaArn]
         PassthroughBehavior: NEVER
-  # VotesResource:
-  #   Type: AWS::ApiGateway::Resource
-  #   Properties:
-  #     RestApiId: !Ref API
-  #     ParentId: !GetAtt API.RootResourceId
-  #     PathPart: votes
-  # VotesPostMethod:
-  #   Type: AWS::ApiGateway::Method
-  #   Properties:
-  #     RestApiId: !Ref API
-  #     ResourceId: !Ref VotesResource
-  #     HttpMethod: POST
-  #     AuthorizationType: NONE
-  #     Integration:
-  #       Type: AWS
-  #       IntegrationHttpMethod: POST
-  #       Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !ImportValue VotesPostLambdaArn]
+  VotesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !GetAtt API.RootResourceId
+      PathPart: votes
+  VotesPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref VotesResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !ImportValue VotesPostLambdaArn]
+        PassthroughBehavior: NEVER
   Certificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
@@ -69,13 +70,14 @@ Resources:
   DomainName:
     Type: AWS::ApiGateway::DomainName
     Properties: 
-      DomainName: !GetAtt Certificate.DomainName
-      RegionalCertificateArn: !GetAtt Certificate.Arn
+      DomainName: !If [IsProd, "api.bitterbattles.com", !Sub "api-${EnvName}.bitterbattles.com"]
+      RegionalCertificateArn: !Ref Certificate
       EndpointConfiguration:
         Types:
           - REGIONAL
   Deployment:
     Type: AWS::ApiGateway::Deployment
+    DependsOn: BattlesGetMethod
     Properties:
       RestApiId: !Ref API
   Stage:
@@ -83,11 +85,10 @@ Resources:
     Properties:
       RestApiId: !Ref API
       DeploymentId: !Ref Deployment
-      StageName: !GetAtt Deployment.StageName
+      StageName: !Ref EnvName
   BasePath:
     Type: AWS::ApiGateway::BasePathMapping
     Properties:
-      BasePath: "/"
       DomainName: !Ref DomainName
       RestApiId: !Ref API
       Stage: !Ref Stage
