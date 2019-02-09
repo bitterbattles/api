@@ -21,6 +21,13 @@ func AssertNotNil(t *testing.T, obj interface{}) {
 	}
 }
 
+// AssertTrue will assert if the value is false
+func AssertTrue(t *testing.T, value bool) {
+	if !value {
+		t.Fatal("Unexpected false value.")
+	}
+}
+
 // AssertEquals will assert if the objects are not equal
 func AssertEquals(t *testing.T, actual interface{}, expected interface{}) {
 	if actual != expected {

@@ -6,52 +6,58 @@ import (
 
 	. "github.com/bitterbattles/api/cmd/battles-post"
 	"github.com/bitterbattles/api/pkg/battles/mocks"
+	"github.com/bitterbattles/api/pkg/common/errors"
+	"github.com/bitterbattles/api/pkg/common/http"
 	. "github.com/bitterbattles/api/pkg/common/tests"
 )
 
 func TestHandlerTooShortTitle(t *testing.T) {
-	expectedResponse := `{"statusCode":400,"message":"Invalid title: Minimum length is 4."}`
-	testHandler(t, "", "description", expectedResponse, false)
+	testHandler(t, "", "description", http.BadRequest)
 }
 
 func TestHandlerTooLongTitle(t *testing.T) {
-	expectedResponse := `{"statusCode":400,"message":"Invalid title: Maximum length is 50."}`
 	title := "loooooooooooooooooooooooooooooooooooooooooooooooooongtitle"
-	testHandler(t, title, "description", expectedResponse, false)
+	testHandler(t, title, "description", http.BadRequest)
 }
 
 func TestHandlerTooShortDescription(t *testing.T) {
-	expectedResponse := `{"statusCode":400,"message":"Invalid description: Minimum length is 4."}`
-	testHandler(t, "title", "", expectedResponse, false)
+	testHandler(t, "title", "", http.BadRequest)
 }
 
 func TestHandlerTooLongDescription(t *testing.T) {
-	expectedResponse := `{"statusCode":400,"message":"Invalid description: Maximum length is 500."}`
 	description := "loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongdescription"
-	testHandler(t, "title", description, expectedResponse, false)
+	testHandler(t, "title", description, http.BadRequest)
 }
 
 func TestHandler(t *testing.T) {
-	testHandler(t, "title", "description", "", true)
+	testHandler(t, "title", "description", http.Created)
 }
 
-func testHandler(t *testing.T, title string, description string, expectedResponse string, expectedSuccess bool) {
-	repository := mocks.NewRepository()
-	handler := NewHandler(repository)
-	request := Request{
+func testHandler(t *testing.T, title string, description string, expectedStatusCode int) {
+	body, _ := json.Marshal(Request{
 		Title:       title,
 		Description: description,
+	})
+	request := &http.Request{
+		Body: string(body),
 	}
-	requestBytes, _ := json.Marshal(request)
-	responseBytes, err := handler.Invoke(nil, requestBytes)
-	AssertNil(t, err)
-	AssertEquals(t, string(responseBytes), expectedResponse)
+	repository := mocks.NewRepository()
+	handler := NewHandler(repository)
+	response, err := handler.Handle(request)
 	battle := repository.GetLastAdded()
-	if expectedSuccess {
+	if expectedStatusCode == http.Created {
+		AssertNotNil(t, response)
+		AssertNil(t, err)
+		AssertEquals(t, response.StatusCode, expectedStatusCode)
 		AssertNotNil(t, battle)
 		AssertEquals(t, battle.Title, title)
 		AssertEquals(t, battle.Description, description)
 	} else {
+		AssertNil(t, response)
+		AssertNotNil(t, err)
 		AssertNil(t, battle)
+		httpError, ok := err.(errors.HTTPError)
+		AssertTrue(t, ok)
+		AssertEquals(t, httpError.StatusCode, expectedStatusCode)
 	}
 }

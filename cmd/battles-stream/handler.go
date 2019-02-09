@@ -7,7 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/bitterbattles/api/pkg/battles"
-	"github.com/bitterbattles/api/pkg/common/handlers"
+	"github.com/bitterbattles/api/pkg/common/lambda/stream"
 	"github.com/bitterbattles/api/pkg/ranks"
 )
 
@@ -17,15 +17,15 @@ type Handler struct {
 }
 
 // NewHandler creates a new Handler instance
-func NewHandler(repository ranks.RepositoryInterface) *handlers.StreamHandler {
+func NewHandler(repository ranks.RepositoryInterface) *stream.Handler {
 	handler := Handler{
 		repository: repository,
 	}
-	return handlers.NewStreamHandler(&handler)
+	return stream.NewHandler(&handler)
 }
 
 // Handle handles a DynamoDB event
-func (handler *Handler) Handle(event *handlers.DynamoEvent) error {
+func (handler *Handler) Handle(event *stream.Event) error {
 	changes := make(map[string]*change)
 	for _, record := range event.Records {
 		handler.captureChange(&record, changes)
@@ -36,7 +36,7 @@ func (handler *Handler) Handle(event *handlers.DynamoEvent) error {
 	return nil
 }
 
-func (handler *Handler) captureChange(record *handlers.DynamoEventRecord, changes map[string]*change) {
+func (handler *Handler) captureChange(record *stream.EventRecord, changes map[string]*change) {
 	var err error
 	oldBattle := battles.Battle{}
 	err = dynamodbattribute.UnmarshalMap(record.Change.OldImage, &oldBattle)

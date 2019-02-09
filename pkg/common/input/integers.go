@@ -1,17 +1,30 @@
 package input
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 // IntegerRules describes rules for validating/sanitizing integers
 type IntegerRules struct {
-	MinValue           int
-	EnforceMinValue    bool
-	DefaultMinValue    int
-	UseDefaultMinValue bool
-	MaxValue           int
-	EnforceMaxValue    bool
-	DefaultMaxValue    int
-	UseDefaultMaxValue bool
+	EnforceNumericString bool
+	MinValue             int
+	EnforceMinValue      bool
+	DefaultMinValue      int
+	UseDefaultMinValue   bool
+	MaxValue             int
+	EnforceMaxValue      bool
+	DefaultMaxValue      int
+	UseDefaultMaxValue   bool
+}
+
+// SanitizeIntegerFromString validates and sanitizes integer values from a string inputs
+func SanitizeIntegerFromString(valueString string, rules IntegerRules, errorCreator ErrorCreator) (int, error) {
+	value, err := strconv.Atoi(valueString)
+	if err != nil && rules.EnforceNumericString {
+		return 0, errorCreator(fmt.Sprintf("Value '%s' is not numeric.", valueString))
+	}
+	return SanitizeInteger(value, rules, errorCreator)
 }
 
 // SanitizeInteger validates and sanitizes integer values

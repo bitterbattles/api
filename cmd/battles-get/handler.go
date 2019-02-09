@@ -4,12 +4,16 @@ import (
 	"log"
 
 	"github.com/bitterbattles/api/pkg/battles"
-	"github.com/bitterbattles/api/pkg/common/handlers"
+	"github.com/bitterbattles/api/pkg/common/http"
 	"github.com/bitterbattles/api/pkg/common/input"
+	"github.com/bitterbattles/api/pkg/common/lambda/api"
 	"github.com/bitterbattles/api/pkg/ranks"
 )
 
 const (
+	sortParam       = "sort"
+	pageParam       = "page"
+	pageSizeParam   = "pageSize"
 	defaultSort     = battles.RecentSort
 	minPage         = 1
 	defaultPage     = 1
@@ -20,25 +24,25 @@ const (
 
 // Handler represents a request handler
 type Handler struct {
-	*handlers.APIHandler
+	*api.Handler
 	ranksRepository   ranks.RepositoryInterface
 	battlesRepository battles.RepositoryInterface
 }
 
 // NewHandler creates a new Handler instance
-func NewHandler(ranksRepository ranks.RepositoryInterface, battlesRepository battles.RepositoryInterface) *handlers.APIHandler {
+func NewHandler(ranksRepository ranks.RepositoryInterface, battlesRepository battles.RepositoryInterface) *api.Handler {
 	handler := Handler{
 		ranksRepository:   ranksRepository,
 		battlesRepository: battlesRepository,
 	}
-	return handlers.NewAPIHandler(handler.Handle)
+	return api.NewHandler(&handler)
 }
 
 // Handle handles a request
-func (handler *Handler) Handle(request *Request) ([]Response, error) {
-	sort := handler.sanitizeSort(request.Sort)
-	page := handler.sanitizePage(request.Page)
-	pageSize := handler.sanitizePageSize(request.PageSize)
+func (handler *Handler) Handle(request *http.Request) (*http.Response, error) {
+	sort := handler.sanitizeSort(request.QueryParams[sortParam])
+	page := handler.sanitizePage(request.QueryParams[pageParam])
+	pageSize := handler.sanitizePageSize(request.QueryParams[pageSizeParam])
 	ids, err := handler.getIDs(sort, page, pageSize)
 	if err != nil {
 		return nil, err
@@ -56,11 +60,11 @@ func (handler *Handler) Handle(request *Request) ([]Response, error) {
 		}
 	}
 	count := len(battles)
-	response := make([]Response, count)
+	responseBody := make([]Response, count)
 	for i := 0; i < count; i++ {
-		response[i] = Response(*battles[i])
+		responseBody[i] = Response(*battles[i])
 	}
-	return response, nil
+	return http.NewResponse(responseBody, nil)
 }
 
 func (handler *Handler) getIDs(sort string, page int, pageSize int) ([]string, error) {
@@ -92,28 +96,30 @@ func (handler *Handler) sanitizeSort(sort string) string {
 	return sort
 }
 
-func (handler *Handler) sanitizePage(page int) int {
+func (handler *Handler) sanitizePage(pageString string) int {
 	rules := input.IntegerRules{
-		EnforceMinValue:    true,
-		MinValue:           minPage,
-		UseDefaultMinValue: true,
-		DefaultMinValue:    defaultPage,
+		EnforceNumericString: false,
+		EnforceMinValue:      true,
+		MinValue:             minPage,
+		UseDefaultMinValue:   true,
+		DefaultMinValue:      defaultPage,
 	}
-	page, _ = input.SanitizeInteger(page, rules, nil)
+	page, _ := input.SanitizeIntegerFromString(pageString, rules, nil)
 	return page
 }
 
-func (handler *Handler) sanitizePageSize(pageSize int) int {
+func (handler *Handler) sanitizePageSize(pageSizeString string) int {
 	rules := input.IntegerRules{
-		EnforceMinValue:    true,
-		MinValue:           minPageSize,
-		UseDefaultMinValue: true,
-		DefaultMinValue:    defaultPageSize,
-		EnforceMaxValue:    true,
-		MaxValue:           maxPageSize,
-		UseDefaultMaxValue: true,
-		DefaultMaxValue:    maxPageSize,
+		EnforceNumericString: false,
+		EnforceMinValue:      true,
+		MinValue:             minPageSize,
+		UseDefaultMinValue:   true,
+		DefaultMinValue:      defaultPageSize,
+		EnforceMaxValue:      true,
+		MaxValue:             maxPageSize,
+		UseDefaultMaxValue:   true,
+		DefaultMaxValue:      maxPageSize,
 	}
-	pageSize, _ = input.SanitizeInteger(pageSize, rules, nil)
+	pageSize, _ := input.SanitizeIntegerFromString(pageSizeString, rules, nil)
 	return pageSize
 }

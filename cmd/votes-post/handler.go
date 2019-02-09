@@ -1,12 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"time"
 
-	"github.com/bitterbattles/api/pkg/common/handlers"
-
 	"github.com/bitterbattles/api/pkg/common/errors"
+	"github.com/bitterbattles/api/pkg/common/http"
 	"github.com/bitterbattles/api/pkg/common/input"
+	"github.com/bitterbattles/api/pkg/common/lambda/api"
 	"github.com/bitterbattles/api/pkg/votes"
 )
 
@@ -18,26 +19,35 @@ type Handler struct {
 }
 
 // NewHandler creates a new Handler instance
-func NewHandler(repository votes.RepositoryInterface) *handlers.APIHandler {
+func NewHandler(repository votes.RepositoryInterface) *api.Handler {
 	handler := Handler{
 		repository: repository,
 	}
-	return handlers.NewAPIHandler(handler.Handle)
+	return api.NewHandler(&handler)
 }
 
 // Handle handles a request
-func (handler *Handler) Handle(request *Request) error {
-	battleID, err := handler.sanitizeBattleID(request.BattleID)
+func (handler *Handler) Handle(request *http.Request) (*http.Response, error) {
+	requestBody := Request{}
+	err := json.Unmarshal([]byte(request.Body), &requestBody)
 	if err != nil {
-		return err
+		return nil, errors.NewBadRequestError("Failed to decode request JSON.")
+	}
+	battleID, err := handler.sanitizeBattleID(requestBody.BattleID)
+	if err != nil {
+		return nil, err
 	}
 	vote := votes.Vote{
 		UserID:    "bgttr132fopt0uo06vlg",
 		BattleID:  battleID,
-		IsVoteFor: request.IsVoteFor,
+		IsVoteFor: requestBody.IsVoteFor,
 		CreatedOn: time.Now().Unix(),
 	}
-	return handler.repository.Add(vote)
+	err = handler.repository.Add(vote)
+	if err != nil {
+		return nil, err
+	}
+	return http.NewResponseWithStatus(nil, nil, http.Created)
 }
 
 func (handler *Handler) sanitizeBattleID(battleID string) (string, error) {

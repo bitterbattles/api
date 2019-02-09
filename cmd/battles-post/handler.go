@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"time"
 
-	"github.com/bitterbattles/api/pkg/common/handlers"
+	"github.com/bitterbattles/api/pkg/common/http"
+	"github.com/bitterbattles/api/pkg/common/lambda/api"
 
 	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/common/errors"
@@ -24,22 +26,27 @@ type Handler struct {
 }
 
 // NewHandler creates a new Handler instance
-func NewHandler(repository battles.RepositoryInterface) *handlers.APIHandler {
+func NewHandler(repository battles.RepositoryInterface) *api.Handler {
 	handler := Handler{
 		repository: repository,
 	}
-	return handlers.NewAPIHandler(handler.Handle)
+	return api.NewHandler(&handler)
 }
 
 // Handle handles a request
-func (handler *Handler) Handle(request *Request) error {
-	title, err := handler.sanitizeTitle(request.Title)
+func (handler *Handler) Handle(request *http.Request) (*http.Response, error) {
+	requestBody := Request{}
+	err := json.Unmarshal([]byte(request.Body), &requestBody)
 	if err != nil {
-		return err
+		return nil, errors.NewBadRequestError("Failed to decode request JSON.")
 	}
-	description, err := handler.sanitizeDescription(request.Description)
+	title, err := handler.sanitizeTitle(requestBody.Title)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	description, err := handler.sanitizeDescription(requestBody.Description)
+	if err != nil {
+		return nil, err
 	}
 	battle := battles.Battle{
 		ID:          xid.New().String(),
@@ -48,7 +55,11 @@ func (handler *Handler) Handle(request *Request) error {
 		Description: description,
 		CreatedOn:   time.Now().Unix(),
 	}
-	return handler.repository.Add(battle)
+	err = handler.repository.Add(battle)
+	if err != nil {
+		return nil, err
+	}
+	return http.NewResponseWithStatus(nil, nil, http.Created)
 }
 
 func (handler *Handler) sanitizeTitle(title string) (string, error) {

@@ -1,5 +1,7 @@
 package errors
 
+import "github.com/bitterbattles/api/pkg/common/http"
+
 // HTTPError represents an error appropriate for HTTP responses
 type HTTPError struct {
 	StatusCode int    `json:"statusCode"`
@@ -13,10 +15,5 @@ func (error HTTPError) Error() string {
 
 // NewBadRequestError creates a new HTTPError instance representing a Bad Request
 func NewBadRequestError(message string) HTTPError {
-	return HTTPError{BadRequestCode, message}
-}
-
-// NewInternalServerError creates a new HTTPError instance representing an Internal Server Error
-func NewInternalServerError() HTTPError {
-	return HTTPError{InternalServerErrorCode, "Something unexpected happened. Please try again later."}
+	return HTTPError{http.BadRequest, message}
 }
