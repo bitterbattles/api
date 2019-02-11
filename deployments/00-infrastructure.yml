@@ -34,27 +34,53 @@ Resources:
       CidrBlock: 10.0.0.0/16
       EnableDnsSupport: true
       EnableDnsHostnames: true
-  Subnet0: 
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+  Subnet0:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
       AvailabilityZone: !Select [0, !GetAZs ""]
       CidrBlock: 10.0.0.0/18
       MapPublicIpOnLaunch: false
-  Subnet1: 
+  Subnet0RouteTable:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref Subnet0
+  Subnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
       AvailabilityZone: !Select [1, !GetAZs ""]
       CidrBlock: 10.0.64.0/18
       MapPublicIpOnLaunch: false
-  Subnet2: 
+  Subnet1RouteTable:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref Subnet1
+  Subnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
       AvailabilityZone: !Select [2, !GetAZs ""]
       CidrBlock: 10.0.128.0/18
       MapPublicIpOnLaunch: false
+  Subnet2RouteTable:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref Subnet2
+  DynamoEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties: 
+      VpcId: !Ref VPC
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.dynamodb"
+      RouteTableIds:
+        - !Ref RouteTable
   BattlesTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -103,11 +129,6 @@ Resources:
           KeyType: RANGE
       StreamSpecification:
         StreamViewType: NEW_IMAGE
-  DynamoEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties: 
-      VpcId: !Ref VPC
-      ServiceName: !Sub "com.amazonaws.${AWS::Region}.dynamodb"
   SubnetGroup:
     Type: AWS::ElastiCache::SubnetGroup
     Properties:
@@ -157,6 +178,6 @@ Outputs:
     Export:
       Name: VotesTableStreamArn
   RedisAddress:
-    Value: !GetAtt Redis.PrimaryEndPoint.Address
+    Value: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
     Export:
       Name: RedisAddress

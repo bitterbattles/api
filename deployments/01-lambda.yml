@@ -33,6 +33,8 @@ Resources:
                   - dynamodb:DescribeStream
                   - dynamodb:GetShardIterator
                   - dynamodb:GetRecords
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
                   - ec2:DescribeNetworkInterfaces
                   - ec2:CreateNetworkInterface
                   - ec2:DeleteNetworkInterface
