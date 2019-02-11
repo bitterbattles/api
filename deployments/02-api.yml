@@ -32,6 +32,13 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !ImportValue BattlesGetLambdaArn]
         PassthroughBehavior: NEVER
+  BattlesGetPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !ImportValue BattlesGetLambdaArn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/GET/battles", API: !Ref API]
   BattlesPostMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -44,6 +51,13 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !ImportValue BattlesPostLambdaArn]
         PassthroughBehavior: NEVER
+  BattlesPostPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !ImportValue BattlesPostLambdaArn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/battles", API: !Ref API]
   VotesResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -62,6 +76,13 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !ImportValue VotesPostLambdaArn]
         PassthroughBehavior: NEVER
+  VotesPostPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !ImportValue VotesPostLambdaArn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/votes", API: !Ref API]
   Certificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
