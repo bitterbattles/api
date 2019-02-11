@@ -58,7 +58,7 @@ func (handler *Handler) captureChange(record *stream.EventRecord, changes map[st
 		c.createdOnChanged = true
 		c.newCreatedOn = newBattle.CreatedOn
 	}
-	if newBattle.VotesFor != oldBattle.VotesFor || newBattle.VotesAgainst != oldBattle.VotesAgainst {
+	if oldBattle.ID == "" || newBattle.VotesFor != oldBattle.VotesFor || newBattle.VotesAgainst != oldBattle.VotesAgainst {
 		c.votesChanged = true
 		c.newVotesFor = newBattle.VotesFor
 		c.newVotesAgainst = newBattle.VotesAgainst
