@@ -31,7 +31,7 @@ func (handler *Handler) Handle(event *stream.Event) error {
 	for battleID, change := range changes {
 		err := handler.repository.IncrementVotes(battleID, change.deltaVotesFor, change.deltaVotesAgainst)
 		if err != nil {
-			log.Println("Failed to increment votes for battle ID", battleID, ".")
+			log.Println("Failed to increment votes. Error:", err)
 		}
 	}
 	return nil

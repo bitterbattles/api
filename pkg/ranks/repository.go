@@ -27,7 +27,7 @@ func NewRepository(client *redis.Client) *Repository {
 // GetRankedBattleIDs gets a range of Battle IDs by category, sorted by score
 func (repository *Repository) GetRankedBattleIDs(category string, offset int, limit int) ([]string, error) {
 	key := fmt.Sprintf(keyPattern, category)
-	results, err := repository.client.ZRangeByScore(key, redis.ZRangeBy{
+	results, err := repository.client.ZRevRangeByScore(key, redis.ZRangeBy{
 		Min:    "-inf",
 		Max:    "+inf",
 		Offset: int64(offset),

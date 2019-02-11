@@ -10,6 +10,8 @@ import (
 	"github.com/bitterbattles/api/pkg/common/http"
 )
 
+const errorBodyFormat = `{"errorMessage":"%s"}`
+
 // HandlerInterface defines an interface for handling API Gateway proxy requests
 type HandlerInterface interface {
 	Handle(*http.Request) (*http.Response, error)
@@ -71,12 +73,12 @@ func (handler *Handler) handledError(statusCode int, message string) ([]byte, er
 	response := &http.Response{
 		StatusCode: statusCode,
 		Headers:    headers,
-		Body:       fmt.Sprintf(`{"errorMessage":"%s"}`, message),
+		Body:       fmt.Sprintf(errorBodyFormat, message),
 	}
 	return json.Marshal(response)
 }
 
 func (handler *Handler) unhandledError(message string, err error) ([]byte, error) {
-	log.Println(message, "Error:", err)
+	log.Println(message, "Unexpected Error:", err)
 	return handler.handledError(http.InternalServerError, "Something unexpected happened. Please try again later.")
 }

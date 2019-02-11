@@ -10,9 +10,7 @@ type EventChange struct {
 
 // EventRecord represents a DynamoDB event record
 type EventRecord struct {
-	Change    EventChange `json:"dynamodb"`
-	EventName string      `json:"eventName"`
-	EventID   string      `json:"eventID"`
+	Change EventChange `json:"dynamodb"`
 }
 
 // Event represents a DynamoDB event
