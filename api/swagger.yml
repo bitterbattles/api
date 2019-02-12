@@ -1,0 +1,143 @@
+swagger: '2.0'
+info:
+  description: The Bitter Battles API.
+  version: '1.0'
+  title: Bitter Battles
+host: api.bitterbattles.com
+basePath: /v1.0
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /battles:
+    get:
+      tags:
+        - battles
+      summary: List battles
+      description: Gets a list of battles.
+      parameters:
+        - in: query
+          name: sort
+          description: How to sort the returned list.
+          required: false
+          type: string
+          enum:
+            - recent
+            - popular
+            - controversial
+          default: recent
+        - in: query
+          name: page
+          description: The pagination page number.
+          required: false
+          type: integer
+          default: 1
+        - in: query
+          name: pageSize
+          description: The pagination page size.
+          required: false
+          type: integer
+          default: 50
+      responses:
+        '200':
+          description: Success.
+          schema:
+            $ref: '#/definitions/battleList'
+          headers:
+            X-Bb-Results-Count:
+              description: The number of results returned.
+              type: integer
+              format: uint64
+            X-Bb-Results-More:
+              description: Whether or not there are more results.
+              type: boolean
+            X-Bb-Results-Total:
+              description: The total number of results available.
+              type: integer
+              format: uint64
+    post:
+      tags:
+        - battles
+      summary: Create a battle
+      description: Creates a new battle.
+      parameters:
+        - in: body
+          name: body
+          description: The battle to create.
+          required: true
+          schema:
+            $ref: '#/definitions/newBattle'
+      responses:
+        '201':
+          description: Success.
+        '400':
+          description: One or more of the request parameters is invalid.
+          schema:
+            $ref: '#/definitions/errorResponse'
+  /votes:
+    post:
+      tags:
+        - votes
+      summary: Record a vote
+      description: Creates a new vote.
+      parameters:
+        - in: body
+          name: body
+          description: The new vote to record.
+          required: true
+          schema:
+            $ref: '#/definitions/newVote'
+      responses:
+        '201':
+          description: Success.
+        '400':
+          description: One or more of the request body parameters is invalid.
+          schema:
+            $ref: '#/definitions/errorResponse'
+definitions:
+  errorResponse:
+    type: object
+    properties:
+      errorMessage:
+        type: string
+  newBattle:
+    type: object
+    properties:
+      title:
+        type: string
+      description:
+        type: string
+    required:
+      - title
+      - description
+  battleList:
+    type: array
+    items:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        votesFor:
+          type: integer
+        votesAgainst:
+          type: integer
+        createdOn:
+          type: integer
+          format: Epoch time (in seconds)
+  newVote:
+    type: object
+    properties:
+      battleId:
+        type: string
+      isVoteFor:
+        type: boolean
+    required:
+      - battleId
+      - isVoteFor

@@ -64,6 +64,7 @@ func (handler *Handler) Handle(request *http.Request) (*http.Response, error) {
 	for i := 0; i < count; i++ {
 		responseBody[i] = Response(*battles[i])
 	}
+	// TODO: Pagination headers
 	return http.NewResponse(responseBody, nil)
 }
 
