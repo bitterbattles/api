@@ -46,18 +46,6 @@ paths:
           description: Success.
           schema:
             $ref: '#/definitions/battleList'
-          headers:
-            X-Bb-Results-Count:
-              description: The number of results returned.
-              type: integer
-              format: uint64
-            X-Bb-Results-More:
-              description: Whether or not there are more results.
-              type: boolean
-            X-Bb-Results-Total:
-              description: The total number of results available.
-              type: integer
-              format: uint64
     post:
       tags:
         - battles
