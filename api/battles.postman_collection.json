@@ -1,0 +1,77 @@
+{
+	"info": {
+		"_postman_id": "3092a492-0d99-485e-b3b2-4393978bafb9",
+		"name": "battles",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"title\": \"This is a Title\",\n\t\"description\": \"This is a description.\"\n}"
+				},
+				"url": {
+					"raw": "{{apiRoot}}/battles",
+					"host": [
+						"{{apiRoot}}"
+					],
+					"path": [
+						"battles"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Paginated",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{apiRoot}}/battles?sort=recent&page=1&pageSize=10",
+					"host": [
+						"{{apiRoot}}"
+					],
+					"path": [
+						"battles"
+					],
+					"query": [
+						{
+							"key": "sort",
+							"value": "recent"
+						},
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "pageSize",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

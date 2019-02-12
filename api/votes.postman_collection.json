@@ -1,0 +1,36 @@
+{
+	"info": {
+		"_postman_id": "aeb5a0b3-67c2-4251-affe-79c8a73b0838",
+		"name": "votes",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"battleId\": \"bhggsse8deoc72k7ugsg\",\n\t\"isVoteFor\": true\n}"
+				},
+				"url": {
+					"raw": "{{apiRoot}}/votes",
+					"host": [
+						"{{apiRoot}}"
+					],
+					"path": [
+						"votes"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
