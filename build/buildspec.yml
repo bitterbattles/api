@@ -1,0 +1,41 @@
+version: 0.2
+phases:
+  pre_build: 
+    commands:
+      - echo Testing battles-get
+      - go test ../cmd/battles-get
+      - echo Testing battles-post
+      - go test ../cmd/battles-post
+      - echo Testing battles-stream
+      - go test ../cmd/battles-stream
+      - echo Testing votes-post
+      - go test ../cmd/votes-post
+      - echo Testing votes-stream
+      - go test ../cmd/votes-stream
+  build:
+    commands:
+      - echo Building battles-get
+      - go build -o battles-get ../cmd/battles-get
+      - echo Building battles-post
+      - go build -o battles-post ../cmd/battles-post
+      - echo Building battles-stream
+      - go build -o battles-stream ../cmd/battles-stream
+      - echo Building votes-post
+      - go build -o votes-post ../cmd/votes-post
+      - echo Building votes-stream
+      - go build -o votes-stream ../cmd/votes-stream
+  post_build:
+    commands:
+      - echo Packaging artifacts
+      - zip battles-get.zip battles-get
+      - zip battles-post.zip battles-post
+      - zip battles-stream.zip battles-stream
+      - zip votes-post.zip votes-post
+      - zip votes-stream.zip votes-stream
+artifacts:
+  files:
+    - battles-get.zip
+    - battles-post.zip
+    - battles-stream.zip
+    - votes-post.zip
+    - votes-stream.zip

@@ -113,3 +113,4 @@ Resources:
       DomainName: !Ref DomainName
       RestApiId: !Ref API
       Stage: !Ref Stage
+      BasePath: "/v1"

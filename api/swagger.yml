@@ -1,10 +1,10 @@
-swagger: '2.0'
+swagger: "2.0"
 info:
   description: The Bitter Battles API.
-  version: '1.0'
+  version: "1.0"
   title: Bitter Battles
 host: api.bitterbattles.com
-basePath: /v1.0
+basePath: /v1
 schemes:
   - https
 consumes:
@@ -42,10 +42,10 @@ paths:
           type: integer
           default: 50
       responses:
-        '200':
+        "200":
           description: Success.
           schema:
-            $ref: '#/definitions/battleList'
+            $ref: "#/definitions/battleList"
     post:
       tags:
         - battles
@@ -57,14 +57,14 @@ paths:
           description: The battle to create.
           required: true
           schema:
-            $ref: '#/definitions/newBattle'
+            $ref: "#/definitions/newBattle"
       responses:
-        '201':
+        "201":
           description: Success.
-        '400':
+        "400":
           description: One or more of the request parameters is invalid.
           schema:
-            $ref: '#/definitions/errorResponse'
+            $ref: "#/definitions/errorResponse"
   /votes:
     post:
       tags:
@@ -77,14 +77,14 @@ paths:
           description: The new vote to record.
           required: true
           schema:
-            $ref: '#/definitions/newVote'
+            $ref: "#/definitions/newVote"
       responses:
-        '201':
+        "201":
           description: Success.
-        '400':
+        "400":
           description: One or more of the request body parameters is invalid.
           schema:
-            $ref: '#/definitions/errorResponse'
+            $ref: "#/definitions/errorResponse"
 definitions:
   errorResponse:
     type: object
