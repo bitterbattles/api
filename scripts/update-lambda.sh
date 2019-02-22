@@ -2,7 +2,7 @@
 
 LAMBDANAME=$1
 LAMBDADIR=../cmd/$LAMBDANAME
-OUTPUTDIR=../temp
+OUTPUTDIR=/tmp/bitterbattles/$LAMBDANAME
 ARTIFACTNAME=$LAMBDANAME.zip
 S3BUCKET=bitterbattles-api-dev-lambda
 
