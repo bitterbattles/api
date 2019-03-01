@@ -55,7 +55,7 @@ func TestHandlerBadRequestJSON(t *testing.T) {
 
 func TestHandlerBadContentType(t *testing.T) {
 	handler := NewHandler(&testHandler{})
-	request := &http.Request{}
+	request := &http.Request{Body: "body"}
 	expectedBody := `{"errorMessage":"Only JSON content type is accepted."}`
 	invokeHandler(t, handler, request, http.UnsupportedMediaType, expectedBody)
 }

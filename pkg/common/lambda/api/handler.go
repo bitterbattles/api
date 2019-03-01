@@ -41,7 +41,7 @@ func (handler *Handler) Invoke(context context.Context, requestBytes []byte) (re
 		return handler.unhandledError("Failed to decode proxy request JSON.", err)
 	}
 	contentType := request.Headers[http.ContentTypeHeader]
-	if contentType != http.ApplicationJSON {
+	if request.Body != "" && contentType != http.ApplicationJSON {
 		return handler.handledError(http.UnsupportedMediaType, "Only JSON content type is accepted.")
 	}
 	response, err := handler.Handle(&request)

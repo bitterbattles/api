@@ -7,12 +7,12 @@ ARTIFACTNAME=$LAMBDANAME.zip
 S3BUCKET=bitterbattles-api-dev-lambda
 
 echo Running tests...
-go test $LAMBDADIR
+GO111MODULE=on go test $LAMBDADIR
 
 echo Building code...
 mkdir -p $OUTPUTDIR
 rm -f $OUTPUTDIR/$LAMBDANAME*
-GOOS=linux GOARCH=amd64 go build -o $OUTPUTDIR/$LAMBDANAME $LAMBDADIR
+GO111MODULE=on GOOS=linux GOARCH=amd64 go build -o $OUTPUTDIR/$LAMBDANAME $LAMBDADIR
 echo ok $OUTPUTDIR/$LAMBDANAME
 
 echo Packaging artifact...
