@@ -3,7 +3,7 @@ package main_test
 import (
 	"testing"
 
-	. "github.com/bitterbattles/api/cmd/battles-delete"
+	. "github.com/bitterbattles/api/cmd/battles-id-delete"
 	"github.com/bitterbattles/api/pkg/battles"
 	battlesMocks "github.com/bitterbattles/api/pkg/battles/mocks"
 	"github.com/bitterbattles/api/pkg/common/http"

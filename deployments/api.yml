@@ -223,15 +223,15 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup
-  BattlesDeleteLambda:
+  BattlesIdDeleteLambda:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: battles-delete
+      FunctionName: battles-id-delete
       Code:
         S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
-        S3Key: battles-delete.zip
+        S3Key: battles-id-delete.zip
       Runtime: go1.x
-      Handler: battles-delete
+      Handler: battles-id-delete
       Role: !GetAtt LambdaRole.Arn
       VpcConfig:
         SubnetIds:
@@ -361,25 +361,31 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/battles", API: !Ref API]
-  BattlesDeleteMethod:
+  BattlesIdResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !Ref BattlesResource
+      PathPart: "{id}"
+  BattlesIdDeleteMethod:
     Type: AWS::ApiGateway::Method
     Properties:
       RestApiId: !Ref API
-      ResourceId: !Ref BattlesResource
+      ResourceId: !Ref BattlesIdResource
       HttpMethod: DELETE
       AuthorizationType: NONE
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt BattlesDeleteLambda.Arn]
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt BattlesIdDeleteLambda.Arn]
         PassthroughBehavior: NEVER
-  BattlesDeletePermission:
+  BattlesIdDeletePermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !GetAtt BattlesDeleteLambda.Arn
+      FunctionName: !GetAtt BattlesIdDeleteLambda.Arn
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/DELETE/battles", API: !Ref API]
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/DELETE/battles/*", API: !Ref API]
   VotesResource:
     Type: AWS::ApiGateway::Resource
     Properties:
