@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/bitterbattles/api/pkg/common/errors"
 	"github.com/bitterbattles/api/pkg/common/http"
@@ -40,8 +41,7 @@ func (handler *Handler) Invoke(context context.Context, requestBytes []byte) (re
 	if err != nil {
 		return handler.unhandledError("Failed to decode proxy request JSON.", err)
 	}
-	contentType := request.Headers[http.ContentTypeHeader]
-	if request.Body != "" && contentType != http.ApplicationJSON {
+	if request.Body != "" && !handler.isJSON(&request) {
 		return handler.handledError(http.UnsupportedMediaType, "Only JSON content type is accepted.")
 	}
 	response, err := handler.Handle(&request)
@@ -64,6 +64,17 @@ func (handler *Handler) Invoke(context context.Context, requestBytes []byte) (re
 		return handler.unhandledError("Failed to encode proxy response JSON.", err)
 	}
 	return responseBytes, nil
+}
+
+func (handler *Handler) isJSON(request *http.Request) bool {
+	contentType := request.Headers[http.ContentTypeHeader]
+	if contentType == "" {
+		contentType = request.Headers[strings.ToLower(http.ContentTypeHeader)]
+		if contentType == "" {
+			return false
+		}
+	}
+	return contentType == http.ApplicationJSON || strings.Contains(strings.ToLower(contentType), http.ApplicationJSON)
 }
 
 func (handler *Handler) handledError(statusCode int, message string) ([]byte, error) {

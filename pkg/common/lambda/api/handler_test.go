@@ -12,7 +12,7 @@ import (
 )
 
 var headers = map[string]string{
-	"Content-Type": "application/json",
+	"content-type": "application/json; charset=utf-8",
 }
 
 type testHandler struct {

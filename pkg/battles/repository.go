@@ -66,6 +66,7 @@ func (repository *Repository) GetByID(id string) (*Battle, error) {
 
 // IncrementVotes increments the votes for a given Battle ID
 func (repository *Repository) IncrementVotes(id string, deltaVotesFor int, deltaVotesAgainst int) error {
+	conditionExpression := "id = :id"
 	updateExpression := "ADD votesFor :deltaVotesFor, votesAgainst :deltaVotesAgainst"
 	_, err := repository.client.UpdateItem(&dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
@@ -74,8 +75,12 @@ func (repository *Repository) IncrementVotes(id string, deltaVotesFor int, delta
 				S: aws.String(id),
 			},
 		},
-		UpdateExpression: &updateExpression,
+		ConditionExpression: &conditionExpression,
+		UpdateExpression:    &updateExpression,
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":id": {
+				S: aws.String(id),
+			},
 			":deltaVotesFor": {
 				N: aws.String(fmt.Sprintf("%d", deltaVotesFor)),
 			},
