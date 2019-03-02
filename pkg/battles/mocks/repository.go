@@ -24,6 +24,12 @@ func (repository *Repository) Add(battle battles.Battle) error {
 	return nil
 }
 
+// DeleteByID deletes a Battle by ID
+func (repository *Repository) DeleteByID(id string) error {
+	repository.data[id] = nil
+	return nil
+}
+
 // GetByID is used to get a Battle by ID
 func (repository *Repository) GetByID(id string) (*battles.Battle, error) {
 	_, ok := repository.data[id]

@@ -16,6 +16,7 @@ const (
 // RepositoryInterface defines an interface for a Battle repository
 type RepositoryInterface interface {
 	Add(Battle) error
+	DeleteByID(string) error
 	GetByID(string) (*Battle, error)
 	IncrementVotes(string, int, int) error
 }
@@ -39,6 +40,19 @@ func (repository *Repository) Add(battle Battle) error {
 	_, err = repository.client.PutItem(&dynamodb.PutItemInput{
 		Item:      item,
 		TableName: aws.String(tableName),
+	})
+	return err
+}
+
+// DeleteByID deletes a Battle by ID
+func (repository *Repository) DeleteByID(id string) error {
+	_, err := repository.client.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			idFieldName: {
+				S: aws.String(id),
+			},
+		},
 	})
 	return err
 }

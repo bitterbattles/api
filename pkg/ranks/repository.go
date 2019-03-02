@@ -10,6 +10,7 @@ const keyPattern = "ranks:%s"
 
 // RepositoryInterface defines an interface for a Rank repository
 type RepositoryInterface interface {
+	DeleteByBattleID(string, string) error
 	GetRankedBattleIDs(string, int, int) ([]string, error)
 	SetScore(string, string, float64) error
 }
@@ -22,6 +23,13 @@ type Repository struct {
 // NewRepository creates a new Rank repository instance
 func NewRepository(client *redis.Client) *Repository {
 	return &Repository{client}
+}
+
+// DeleteByBattleID deletes a score in a category for the given Battle ID
+func (repository *Repository) DeleteByBattleID(category string, battleID string) error {
+	key := fmt.Sprintf(keyPattern, category)
+	_, err := repository.client.ZRem(key, battleID).Result()
+	return err
 }
 
 // GetRankedBattleIDs gets a range of Battle IDs by category, sorted by score

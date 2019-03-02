@@ -17,6 +17,21 @@ func NewRepository() *Repository {
 	return &Repository{make(map[string][]*Rank), nil}
 }
 
+// DeleteByBattleID deletes a score in a category for the given Battle ID
+func (repository *Repository) DeleteByBattleID(category string, battleID string) error {
+	entries := repository.data[category]
+	if entries != nil {
+		for i := 0; i < len(entries); i++ {
+			entry := entries[i]
+			if entry.BattleID == battleID {
+				entries = append(entries[:i], entries[i+1:]...)
+				repository.data[category] = entries
+			}
+		}
+	}
+	return nil
+}
+
 // GetRankedBattleIDs gets a range of Battle IDs by category, sorted by score
 func (repository *Repository) GetRankedBattleIDs(category string, offset int, limit int) ([]string, error) {
 	_, ok := repository.data[category]
