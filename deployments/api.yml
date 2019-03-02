@@ -143,12 +143,12 @@ Resources:
       ReplicationGroupDescription: Multi-AZ redis cluster.
       Engine: redis
       CacheNodeType: !Ref RedisNodeType
-      AutomaticFailoverEnabled: true
-      NumCacheClusters: 3
+      AutomaticFailoverEnabled: !If [IsProd, true, false]
+      NumCacheClusters: !If [IsProd, 3, 1]
       PreferredCacheClusterAZs:
         - !Select [0, !GetAZs ""]
-        - !Select [1, !GetAZs ""]
-        - !Select [2, !GetAZs ""]
+        - !If [IsProd, !Select [1, !GetAZs ""], !Ref "AWS::NoValue"]
+        - !If [IsProd, !Select [2, !GetAZs ""], !Ref "AWS::NoValue"]
       CacheSubnetGroupName: !Ref SubnetGroup
       SecurityGroupIds:
         - !GetAtt VPC.DefaultSecurityGroup
