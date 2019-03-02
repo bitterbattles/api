@@ -66,6 +66,28 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Delete by ID",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{apiRoot}}/battles/bhggsse8deoc72k7ugsg",
+					"host": [
+						"{{apiRoot}}"
+					],
+					"path": [
+						"battles",
+						"bhggsse8deoc72k7ugsg"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }

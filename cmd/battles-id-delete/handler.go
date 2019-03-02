@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/common/http"
 	"github.com/bitterbattles/api/pkg/common/lambda/api"
@@ -28,8 +26,10 @@ func NewHandler(repository battles.RepositoryInterface) *api.Handler {
 
 // Handle handles a request
 func (handler *Handler) Handle(request *http.Request) (*http.Response, error) {
-	log.Println(request)
 	battleID := request.PathParams[idParam]
-	handler.repository.DeleteByID(battleID)
+	err := handler.repository.DeleteByID(battleID)
+	if err != nil {
+		return nil, err
+	}
 	return http.NewResponseWithStatus(nil, nil, http.NoContent)
 }
