@@ -33,6 +33,21 @@ func TestHandlerUpdatedBattle(t *testing.T) {
 	verifyRankScores(t, repository, "id1", 456, recencyWeight+41, recencyWeight+40)
 }
 
+func TestHandlerDeletedBattle(t *testing.T) {
+	repository := mocks.NewRepository()
+	repository.SetScore(battles.RecentSort, "id0", 1)
+	repository.SetScore(battles.PopularSort, "id0", 2)
+	repository.SetScore(battles.ControversialSort, "id0", 3)
+	handler := NewHandler(repository)
+	eventJSON := `{"records":[{"dynamodb":{"OldImage":{"id":{"S":"id0"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"123"}}}}]}`
+	responseBytes, err := handler.Invoke(nil, []byte(eventJSON))
+	AssertNil(t, responseBytes)
+	AssertNil(t, err)
+	AssertEquals(t, repository.GetScore(battles.RecentSort, "id0"), float64(0))
+	AssertEquals(t, repository.GetScore(battles.PopularSort, "id0"), float64(0))
+	AssertEquals(t, repository.GetScore(battles.ControversialSort, "id0"), float64(0))
+}
+
 func verifyRankScores(t *testing.T, repository *mocks.Repository, id string, expectedRecency float64, expectedPopularity float64, expectedControversy float64) {
 	recency := repository.GetScore(battles.RecentSort, id)
 	popularity := repository.GetScore(battles.PopularSort, id)

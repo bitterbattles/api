@@ -181,6 +181,7 @@ Resources:
                   - dynamodb:GetItem
                   - dynamodb:PutItem
                   - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
                   - ec2:DescribeNetworkInterfaces
                   - ec2:CreateNetworkInterface
                   - ec2:DeleteNetworkInterface
@@ -214,6 +215,23 @@ Resources:
         S3Key: battles-post.zip
       Runtime: go1.x
       Handler: battles-post
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+  BattlesDeleteLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: battles-delete
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: battles-delete.zip
+      Runtime: go1.x
+      Handler: battles-delete
       Role: !GetAtt LambdaRole.Arn
       VpcConfig:
         SubnetIds:
@@ -343,6 +361,25 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/battles", API: !Ref API]
+  BattlesDeleteMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref BattlesResource
+      HttpMethod: DELETE
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt BattlesDeleteLambda.Arn]
+        PassthroughBehavior: NEVER
+  BattlesDeletePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt BattlesDeleteLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/DELETE/battles", API: !Ref API]
   VotesResource:
     Type: AWS::ApiGateway::Resource
     Properties:

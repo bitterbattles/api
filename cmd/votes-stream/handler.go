@@ -46,6 +46,9 @@ func (handler *Handler) captureChange(record *stream.EventRecord, changes map[st
 		return
 	}
 	battleID := vote.BattleID
+	if battleID == "" {
+		return
+	}
 	c, ok := changes[battleID]
 	if !ok {
 		c = &change{}

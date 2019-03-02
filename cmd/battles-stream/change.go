@@ -6,4 +6,5 @@ type change struct {
 	votesChanged     bool
 	newVotesFor      int
 	newVotesAgainst  int
+	deleted          bool
 }

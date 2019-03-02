@@ -50,42 +50,56 @@ func (handler *Handler) captureChange(record *stream.EventRecord, changes map[st
 		log.Println("Failed to unmarshal new image in DynamoDB event. Error:", err)
 		return
 	}
-	c := changes[newBattle.ID]
+	id := newBattle.ID
+	if id == "" {
+		id = oldBattle.ID
+	}
+	c := changes[id]
 	if c == nil {
 		c = &change{}
 	}
-	if newBattle.CreatedOn != oldBattle.CreatedOn {
-		c.createdOnChanged = true
-		c.newCreatedOn = newBattle.CreatedOn
+	if newBattle.ID == "" {
+		c.deleted = true
+	} else {
+		if newBattle.CreatedOn != oldBattle.CreatedOn {
+			c.createdOnChanged = true
+			c.newCreatedOn = newBattle.CreatedOn
+		}
+		if oldBattle.ID == "" || newBattle.VotesFor != oldBattle.VotesFor || newBattle.VotesAgainst != oldBattle.VotesAgainst {
+			c.votesChanged = true
+			c.newVotesFor = newBattle.VotesFor
+			c.newVotesAgainst = newBattle.VotesAgainst
+		}
 	}
-	if oldBattle.ID == "" || newBattle.VotesFor != oldBattle.VotesFor || newBattle.VotesAgainst != oldBattle.VotesAgainst {
-		c.votesChanged = true
-		c.newVotesFor = newBattle.VotesFor
-		c.newVotesAgainst = newBattle.VotesAgainst
-	}
-	changes[newBattle.ID] = c
+	changes[id] = c
 }
 
 func (handler *Handler) processChange(battleID string, change *change) {
 	var err error
 	var score float64
-	if change.createdOnChanged {
-		score = handler.calculateRecency(change.newCreatedOn)
-		err = handler.repository.SetScore(battles.RecentSort, battleID, score)
-		if err != nil {
-			log.Println("Failed to set value in", battles.RecentSort, "ranking. Error:", err)
+	if change.deleted {
+		handler.repository.DeleteByBattleID(battles.RecentSort, battleID)
+		handler.repository.DeleteByBattleID(battles.PopularSort, battleID)
+		handler.repository.DeleteByBattleID(battles.ControversialSort, battleID)
+	} else {
+		if change.createdOnChanged {
+			score = handler.calculateRecency(change.newCreatedOn)
+			err = handler.repository.SetScore(battles.RecentSort, battleID, score)
+			if err != nil {
+				log.Println("Failed to set value in", battles.RecentSort, "ranking. Error:", err)
+			}
 		}
-	}
-	if change.votesChanged {
-		score = handler.calculatePopularity(change.newVotesFor, change.newVotesAgainst)
-		err = handler.repository.SetScore(battles.PopularSort, battleID, score)
-		if err != nil {
-			log.Println("Failed to set value in", battles.PopularSort, "ranking. Error:", err)
-		}
-		score = handler.calculateControversy(change.newVotesFor, change.newVotesAgainst)
-		err = handler.repository.SetScore(battles.ControversialSort, battleID, score)
-		if err != nil {
-			log.Println("Failed to set value in", battles.ControversialSort, "ranking. Error:", err)
+		if change.votesChanged {
+			score = handler.calculatePopularity(change.newVotesFor, change.newVotesAgainst)
+			err = handler.repository.SetScore(battles.PopularSort, battleID, score)
+			if err != nil {
+				log.Println("Failed to set value in", battles.PopularSort, "ranking. Error:", err)
+			}
+			score = handler.calculateControversy(change.newVotesFor, change.newVotesAgainst)
+			err = handler.repository.SetScore(battles.ControversialSort, battleID, score)
+			if err != nil {
+				log.Println("Failed to set value in", battles.ControversialSort, "ranking. Error:", err)
+			}
 		}
 	}
 }
