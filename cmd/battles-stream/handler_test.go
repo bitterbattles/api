@@ -39,7 +39,7 @@ func TestHandlerDeletedBattle(t *testing.T) {
 	repository.SetScore(battles.PopularSort, "id0", 2)
 	repository.SetScore(battles.ControversialSort, "id0", 3)
 	handler := NewHandler(repository)
-	eventJSON := `{"records":[{"dynamodb":{"OldImage":{"id":{"S":"id0"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"123"}}}}]}`
+	eventJSON := `{"records":[{"dynamodb":{"OldImage":{"id":{"S":"id0"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"123"},"state":{"N":"1"}},"NewImage":{"id":{"S":"id0"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"123"},"state":{"N":"2"}}}}]}`
 	responseBytes, err := handler.Invoke(nil, []byte(eventJSON))
 	AssertNil(t, responseBytes)
 	AssertNil(t, err)

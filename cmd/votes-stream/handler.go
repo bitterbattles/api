@@ -47,6 +47,7 @@ func (handler *Handler) captureChange(record *stream.EventRecord, changes map[st
 	}
 	battleID := vote.BattleID
 	if battleID == "" {
+		log.Println("Unexpected missing battle ID.")
 		return
 	}
 	c, ok := changes[battleID]

@@ -89,6 +89,7 @@ func addBattles(ranksRepository *ranksMocks.Repository, battlesRepository *battl
 			VotesFor:     i,
 			VotesAgainst: i * 2,
 			CreatedOn:    int64(i * 3),
+			State:        battles.Active,
 		}
 		battlesRepository.Add(battle)
 		ranksRepository.SetScore(category, battle.ID, float64(i))

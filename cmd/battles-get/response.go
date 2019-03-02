@@ -9,4 +9,5 @@ type Response struct {
 	VotesFor     int    `json:"votesFor"`
 	VotesAgainst int    `json:"votesAgainst"`
 	CreatedOn    int64  `json:"createdOn"`
+	State        int    `json:"-"`
 }

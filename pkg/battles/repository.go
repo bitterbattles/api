@@ -46,11 +46,23 @@ func (repository *Repository) Add(battle Battle) error {
 
 // DeleteByID deletes a Battle by ID
 func (repository *Repository) DeleteByID(id string) error {
-	_, err := repository.client.DeleteItem(&dynamodb.DeleteItemInput{
+	conditionExpression := "id = :id"
+	updateExpression := "SET state :state"
+	_, err := repository.client.UpdateItem(&dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			idFieldName: {
 				S: aws.String(id),
+			},
+		},
+		ConditionExpression: &conditionExpression,
+		UpdateExpression:    &updateExpression,
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":id": {
+				S: aws.String(id),
+			},
+			":state": {
+				N: aws.String(fmt.Sprintf("%d", Deleted)),
 			},
 		},
 	})

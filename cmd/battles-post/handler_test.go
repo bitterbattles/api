@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	. "github.com/bitterbattles/api/cmd/battles-post"
+	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/battles/mocks"
 	"github.com/bitterbattles/api/pkg/common/errors"
 	"github.com/bitterbattles/api/pkg/common/http"
@@ -52,6 +53,7 @@ func testHandler(t *testing.T, title string, description string, expectedStatusC
 		AssertNotNil(t, battle)
 		AssertEquals(t, battle.Title, title)
 		AssertEquals(t, battle.Description, description)
+		AssertEquals(t, battle.State, battles.Active)
 	} else {
 		AssertNil(t, response)
 		AssertNotNil(t, err)

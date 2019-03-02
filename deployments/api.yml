@@ -181,7 +181,6 @@ Resources:
                   - dynamodb:GetItem
                   - dynamodb:PutItem
                   - dynamodb:UpdateItem
-                  - dynamodb:DeleteItem
                   - ec2:DescribeNetworkInterfaces
                   - ec2:CreateNetworkInterface
                   - ec2:DeleteNetworkInterface

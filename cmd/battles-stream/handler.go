@@ -52,13 +52,18 @@ func (handler *Handler) captureChange(record *stream.EventRecord, changes map[st
 	}
 	id := newBattle.ID
 	if id == "" {
-		id = oldBattle.ID
+		log.Println("Unexpected missing new Battle ID.")
+		return
 	}
 	c := changes[id]
 	if c == nil {
 		c = &change{}
 	}
-	if newBattle.ID == "" {
+	if newBattle.State == battles.Deleted {
+		if oldBattle.State == battles.Deleted {
+			log.Println("Unexpected modification of deleted battle.")
+			return
+		}
 		c.deleted = true
 	} else {
 		if newBattle.CreatedOn != oldBattle.CreatedOn {

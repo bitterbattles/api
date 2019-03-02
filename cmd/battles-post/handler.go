@@ -54,6 +54,7 @@ func (handler *Handler) Handle(request *http.Request) (*http.Response, error) {
 		Title:       title,
 		Description: description,
 		CreatedOn:   time.Now().Unix(),
+		State:       battles.Active,
 	}
 	err = handler.repository.Add(battle)
 	if err != nil {
