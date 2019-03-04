@@ -1,0 +1,36 @@
+{
+	"info": {
+		"_postman_id": "11e09b6a-6008-4371-912b-c6b12032142b",
+		"name": "logins",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Log In",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"emailOrUsername\": \"trippplesweet\",\n\t\"password\": \"bbFTW!\"\n}"
+				},
+				"url": {
+					"raw": "{{apiRoot}}/logins",
+					"host": [
+						"{{apiRoot}}"
+					],
+					"path": [
+						"logins"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
