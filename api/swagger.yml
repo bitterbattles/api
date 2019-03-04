@@ -42,7 +42,7 @@ paths:
           type: integer
           default: 50
       responses:
-        "200":
+        200:
           description: Success.
           schema:
             $ref: "#/definitions/battleList"
@@ -59,12 +59,27 @@ paths:
           schema:
             $ref: "#/definitions/newBattle"
       responses:
-        "201":
+        201:
           description: Success.
-        "400":
+        400:
           description: One or more of the request parameters is invalid.
           schema:
             $ref: "#/definitions/errorResponse"
+  /battles/{id}:
+    delete:
+      tags:
+        - battles
+      summary: Deletes a battle
+      description: Deletes an existing battle by ID.
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the battle.
+          required: true
+          type: string
+      responses:
+        204:
+          description: Success.
   /votes:
     post:
       tags:
@@ -79,9 +94,9 @@ paths:
           schema:
             $ref: "#/definitions/newVote"
       responses:
-        "201":
+        201:
           description: Success.
-        "400":
+        400:
           description: One or more of the request body parameters is invalid.
           schema:
             $ref: "#/definitions/errorResponse"
