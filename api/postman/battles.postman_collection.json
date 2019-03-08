@@ -11,6 +11,11 @@
 				"method": "POST",
 				"header": [
 					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					},
+					{
 						"key": "Content-Type",
 						"value": "application/json",
 						"type": "text"
@@ -18,7 +23,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"title\": \"This is a Title\",\n\t\"description\": \"This is a description.\"\n}"
+					"raw": "{\n\t\"title\": \"title\",\n\t\"description\": \"description\"\n}"
 				},
 				"url": {
 					"raw": "{{apiRoot}}/battles",
@@ -71,19 +76,25 @@
 			"name": "Delete by ID",
 			"request": {
 				"method": "DELETE",
-				"header": [],
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					}
+				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{apiRoot}}/battles/bhggsse8deoc72k7ugsg",
+					"raw": "{{apiRoot}}/battles/bi0rt02ft3os72gmcdh0",
 					"host": [
 						"{{apiRoot}}"
 					],
 					"path": [
 						"battles",
-						"bhggsse8deoc72k7ugsg"
+						"bi0rt02ft3os72gmcdh0"
 					]
 				}
 			},

@@ -11,6 +11,11 @@
 				"method": "POST",
 				"header": [
 					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					},
+					{
 						"key": "Content-Type",
 						"value": "application/json",
 						"type": "text"
@@ -18,7 +23,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"battleId\": \"bhggsse8deoc72k7ugsg\",\n\t\"isVoteFor\": true\n}"
+					"raw": "{\n\t\"battleId\": \"bi0slk0m4dic72afobd0\",\n\t\"isVoteFor\": true\n}"
 				},
 				"url": {
 					"raw": "{{apiRoot}}/votes",

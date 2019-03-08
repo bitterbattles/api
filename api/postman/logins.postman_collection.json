@@ -7,6 +7,19 @@
 	"item": [
 		{
 			"name": "Log In",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "208ab590-1ded-484a-bc8d-42c398561992",
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.globals.set(\"accessToken\", jsonData.accessToken);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "POST",
 				"header": [
@@ -18,7 +31,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"username\": \"trippplesweet\",\n\t\"password\": \"bbFTW!\"\n}"
+					"raw": "{\n\t\"username\": \"username\",\n\t\"password\": \"P@ssw0rd\"\n}"
 				},
 				"url": {
 					"raw": "{{apiRoot}}/logins",
