@@ -1,51 +1,59 @@
 package main_test
 
 import (
+	"encoding/json"
 	"testing"
-	"time"
 
 	. "github.com/bitterbattles/api/cmd/battles-stream"
 	"github.com/bitterbattles/api/pkg/battles"
-	. "github.com/bitterbattles/api/pkg/common/tests"
+	"github.com/bitterbattles/api/pkg/lambda/stream"
 	"github.com/bitterbattles/api/pkg/ranks/mocks"
+	. "github.com/bitterbattles/api/pkg/tests"
+	"github.com/bitterbattles/api/pkg/time"
 )
 
-func TestHandlerNewBattle(t *testing.T) {
+func TestProcessorNewBattle(t *testing.T) {
 	repository := mocks.NewRepository()
-	handler := NewHandler(repository)
+	processor := NewProcessor(repository)
 	eventJSON := `{"records":[{"dynamodb":{"NewImage":{"id":{"S":"id0"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"123"}}}}]}`
-	responseBytes, err := handler.Invoke(nil, []byte(eventJSON))
-	AssertNil(t, responseBytes)
+	event := newEvent(eventJSON)
+	err := processor.Process(event)
 	AssertNil(t, err)
-	recencyWeight := float64(time.Now().Unix() / 86400)
+	recencyWeight := float64(time.NowUnix() / 86400)
 	verifyRankScores(t, repository, "id0", 123, recencyWeight, recencyWeight)
 }
 
-func TestHandlerUpdatedBattle(t *testing.T) {
+func TestProcessorUpdatedBattle(t *testing.T) {
 	repository := mocks.NewRepository()
-	handler := NewHandler(repository)
+	processor := NewProcessor(repository)
 	eventJSON := `{"records":[{"dynamodb":{"NewImage":{"id":{"S":"id0"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"123"}}}},{"dynamodb":{"NewImage":{"id":{"S":"id1"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"456"}}}},{"dynamodb":{"OldImage":{"id":{"S":"id0"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"123"}},"NewImage":{"id":{"S":"id0"},"votesFor":{"N":"10"},"votesAgainst":{"N":"5"},"createdOn":{"N":"123"}}}},{"dynamodb":{"OldImage":{"id":{"S":"id1"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"456"}},"NewImage":{"id":{"S":"id1"},"votesFor":{"N":"20"},"votesAgainst":{"N":"21"},"createdOn":{"N":"456"}}}}]}`
-	responseBytes, err := handler.Invoke(nil, []byte(eventJSON))
-	AssertNil(t, responseBytes)
+	event := newEvent(eventJSON)
+	err := processor.Process(event)
 	AssertNil(t, err)
-	recencyWeight := float64(time.Now().Unix() / 86400)
+	recencyWeight := float64(time.NowUnix() / 86400)
 	verifyRankScores(t, repository, "id0", 123, recencyWeight+15, recencyWeight+10)
 	verifyRankScores(t, repository, "id1", 456, recencyWeight+41, recencyWeight+40)
 }
 
-func TestHandlerDeletedBattle(t *testing.T) {
+func TestProcessorDeletedBattle(t *testing.T) {
 	repository := mocks.NewRepository()
 	repository.SetScore(battles.RecentSort, "id0", 1)
 	repository.SetScore(battles.PopularSort, "id0", 2)
 	repository.SetScore(battles.ControversialSort, "id0", 3)
-	handler := NewHandler(repository)
+	processor := NewProcessor(repository)
 	eventJSON := `{"records":[{"dynamodb":{"OldImage":{"id":{"S":"id0"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"123"},"state":{"N":"1"}},"NewImage":{"id":{"S":"id0"},"votesFor":{"N":"0"},"votesAgainst":{"N":"0"},"createdOn":{"N":"123"},"state":{"N":"2"}}}}]}`
-	responseBytes, err := handler.Invoke(nil, []byte(eventJSON))
-	AssertNil(t, responseBytes)
+	event := newEvent(eventJSON)
+	err := processor.Process(event)
 	AssertNil(t, err)
 	AssertEquals(t, repository.GetScore(battles.RecentSort, "id0"), float64(0))
 	AssertEquals(t, repository.GetScore(battles.PopularSort, "id0"), float64(0))
 	AssertEquals(t, repository.GetScore(battles.ControversialSort, "id0"), float64(0))
+}
+
+func newEvent(eventJSON string) *stream.Event {
+	event := &stream.Event{}
+	json.Unmarshal([]byte(eventJSON), event)
+	return event
 }
 
 func verifyRankScores(t *testing.T, repository *mocks.Repository, id string, expectedRecency float64, expectedPopularity float64, expectedControversy float64) {

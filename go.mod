@@ -6,4 +6,5 @@ require (
 	github.com/go-redis/redis v6.15.1+incompatible
 	github.com/rs/xid v1.2.1
 	github.com/stretchr/testify v1.3.0 // indirect
+	golang.org/x/crypto v0.0.0-20190228161510-8dd112bcdc25
 )

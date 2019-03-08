@@ -15,7 +15,7 @@ const (
 
 // RepositoryInterface defines an interface for a Battle repository
 type RepositoryInterface interface {
-	Add(Battle) error
+	Add(*Battle) error
 	DeleteByID(string) error
 	GetByID(string) (*Battle, error)
 	IncrementVotes(string, int, int) error
@@ -32,7 +32,7 @@ func NewRepository(client *dynamodb.DynamoDB) *Repository {
 }
 
 // Add is used to insert a new Battle document
-func (repository *Repository) Add(battle Battle) error {
+func (repository *Repository) Add(battle *Battle) error {
 	item, err := dynamodbattribute.MarshalMap(battle)
 	if err != nil {
 		return err

@@ -6,7 +6,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
-const tableName = "votes"
+const (
+	tableName         = "votes"
+	battleIDFieldName = "battleId"
+)
 
 // RepositoryInterface defines an interface for a Vote repository
 type RepositoryInterface interface {
@@ -29,9 +32,11 @@ func (repository *Repository) Add(vote Vote) error {
 	if err != nil {
 		return err
 	}
+	conditionExpression := "attribute_not_exists(" + battleIDFieldName + ")"
 	_, err = repository.client.PutItem(&dynamodb.PutItemInput{
-		Item:      item,
-		TableName: aws.String(tableName),
+		Item:                item,
+		TableName:           aws.String(tableName),
+		ConditionExpression: &conditionExpression,
 	})
 	return err
 }

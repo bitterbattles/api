@@ -181,33 +181,30 @@ definitions:
   credentials:
     type: object
     properties:
-      emailOrUsername:
+      username:
         type: string
       password:
         type: string
     required:
-      - emailOrUsername
+      - username
       - password
   loginResponse:
     type: object
     properties:
-      token:
+      accessToken:
         type: string
-      expiresIn:
+      accessExpiresIn:
         type: integer
   newUser:
     type: object
     properties:
-      email:
+      username:
         type: string
       password:
         type: string
-      username:
-        type: string
     required:
-      - email
-      - password
       - username
+      - password
   newVote:
     type: object
     properties:

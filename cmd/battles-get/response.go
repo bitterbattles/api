@@ -1,6 +1,6 @@
 package main
 
-// Response represents an element in the response body
+// Response represents an element in the response results
 type Response struct {
 	ID           string `json:"id"`
 	UserID       string `json:"-"`

@@ -15,6 +15,18 @@ Parameters:
   BattlesTableUserIdWCUs:
     Type: Number
     Default: 1
+  UsersTableRCUs:
+    Type: Number
+    Default: 1
+  UsersTableWCUs:
+    Type: Number
+    Default: 1
+  UsersTableUsernameRCUs:
+    Type: Number
+    Default: 1
+  UsersTableUsernameWCUs:
+    Type: Number
+    Default: 1
   VotesTableRCUs:
     Type: Number
     Default: 1
@@ -109,6 +121,32 @@ Resources:
             WriteCapacityUnits: !Ref BattlesTableUserIdWCUs
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: users
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref UsersTableRCUs
+        WriteCapacityUnits: !Ref UsersTableWCUs
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: username
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: username
+          KeySchema:
+            - AttributeName: username
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref UsersTableUsernameRCUs
+            WriteCapacityUnits: !Ref UsersTableUsernameWCUs
   VotesTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -259,6 +297,48 @@ Resources:
       Environment:
         Variables:
           REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+  BattlesStreamTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt BattlesTable.StreamArn
+      FunctionName: !GetAtt BattlesStreamLambda.Arn
+      Enabled: true
+      BatchSize: 100
+      StartingPosition: TRIM_HORIZON
+  LoginsPostLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: logins-post
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: logins-post.zip
+      Runtime: go1.x
+      Handler: logins-post
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+  UsersPostLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: users-post
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: users-post.zip
+      Runtime: go1.x
+      Handler: users-post
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
   VotesPostLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -293,14 +373,6 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup
-  BattlesStreamTrigger:
-    Type: AWS::Lambda::EventSourceMapping
-    Properties:
-      EventSourceArn: !GetAtt BattlesTable.StreamArn
-      FunctionName: !GetAtt BattlesStreamLambda.Arn
-      Enabled: true
-      BatchSize: 100
-      StartingPosition: TRIM_HORIZON
   VotesStreamTrigger:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
@@ -385,6 +457,56 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/DELETE/battles/*", API: !Ref API]
+  LoginsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !GetAtt API.RootResourceId
+      PathPart: logins
+  LoginsPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref LoginsResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt LoginsPostLambda.Arn]
+        PassthroughBehavior: NEVER
+  LoginsPostPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt LoginsPostLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/logins", API: !Ref API]
+  UsersResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !GetAtt API.RootResourceId
+      PathPart: users
+  UsersPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref UsersResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt UsersPostLambda.Arn]
+        PassthroughBehavior: NEVER
+  UsersPostPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt UsersPostLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/users", API: !Ref API]
   VotesResource:
     Type: AWS::ApiGateway::Resource
     Properties:

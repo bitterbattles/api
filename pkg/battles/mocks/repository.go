@@ -18,9 +18,9 @@ func NewRepository() *Repository {
 }
 
 // Add is used to insert a new Battle document
-func (repository *Repository) Add(battle battles.Battle) error {
-	repository.data[battle.ID] = &battle
-	repository.lastAdded = &battle
+func (repository *Repository) Add(battle *battles.Battle) error {
+	repository.data[battle.ID] = battle
+	repository.lastAdded = battle
 	return nil
 }
 

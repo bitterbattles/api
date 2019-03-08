@@ -18,7 +18,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"emailOrUsername\": \"trippplesweet\",\n\t\"password\": \"bbFTW!\"\n}"
+					"raw": "{\n\t\"username\": \"trippplesweet\",\n\t\"password\": \"bbFTW!\"\n}"
 				},
 				"url": {
 					"raw": "{{apiRoot}}/logins",
