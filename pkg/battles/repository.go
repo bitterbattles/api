@@ -38,8 +38,8 @@ func (repository *Repository) Add(battle *Battle) error {
 		return err
 	}
 	_, err = repository.client.PutItem(&dynamodb.PutItemInput{
-		Item:      item,
 		TableName: aws.String(tableName),
+		Item:      item,
 	})
 	return err
 }
