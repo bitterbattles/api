@@ -193,8 +193,6 @@ definitions:
     properties:
       accessToken:
         type: string
-      accessExpiresIn:
-        type: integer
   newUser:
     type: object
     properties:
