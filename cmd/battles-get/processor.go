@@ -73,7 +73,7 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 			}
 			var vote *votes.Vote
 			if input.AuthContext != nil && input.AuthContext.UserID != "" {
-				vote, err = processor.votesRepository.GetByUserAndBattleIDs(battle.UserID, battle.ID)
+				vote, err = processor.votesRepository.GetByUserAndBattleIDs(input.AuthContext.UserID, battle.ID)
 				if err != nil {
 					return nil, err
 				}
