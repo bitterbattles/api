@@ -6,7 +6,7 @@ type Response struct {
 	Username     string `json:"username"`
 	Title        string `json:"title"`
 	Description  string `json:"description"`
-	CanVote      bool   `json:"canVote"`
+	HasVoted     bool   `json:"hasVoted"`
 	VotesFor     int    `json:"votesFor"`
 	VotesAgainst int    `json:"votesAgainst"`
 	CreatedOn    int64  `json:"createdOn"`

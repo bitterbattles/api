@@ -71,9 +71,12 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 			if err != nil {
 				return nil, err
 			}
-			vote, err := processor.votesRepository.GetByUserAndBattleIDs(battle.UserID, battle.ID)
-			if err != nil {
-				return nil, err
+			var vote *votes.Vote
+			if input.AuthContext != nil && input.AuthContext.UserID != "" {
+				vote, err = processor.votesRepository.GetByUserAndBattleIDs(battle.UserID, battle.ID)
+				if err != nil {
+					return nil, err
+				}
 			}
 			responses = append(responses, processor.toResponse(battle, user, vote))
 		} else {
@@ -146,16 +149,16 @@ func (processor *Processor) toResponse(battle *battles.Battle, user *users.User,
 	if user != nil && user.State == users.Active {
 		username = user.DisplayUsername
 	}
-	var canVote bool
-	if vote == nil {
-		canVote = true
+	var hasVoted bool
+	if vote != nil {
+		hasVoted = true
 	}
 	return &Response{
 		ID:           battle.ID,
 		Username:     username,
 		Title:        battle.Title,
 		Description:  battle.Description,
-		CanVote:      canVote,
+		HasVoted:     hasVoted,
 		VotesFor:     battle.VotesFor,
 		VotesAgainst: battle.VotesAgainst,
 		CreatedOn:    battle.CreatedOn,
