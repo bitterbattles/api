@@ -86,12 +86,12 @@ func (repository *Repository) GetByID(id string) (*Battle, error) {
 	if err != nil {
 		return nil, err
 	}
-	battle := Battle{}
-	err = dynamodbattribute.UnmarshalMap(result.Item, &battle)
+	battle := &Battle{}
+	err = dynamodbattribute.UnmarshalMap(result.Item, battle)
 	if err != nil {
 		return nil, err
 	}
-	return &battle, nil
+	return battle, nil
 }
 
 // IncrementVotes increments the votes for a given Battle ID

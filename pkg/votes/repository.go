@@ -8,12 +8,14 @@ import (
 
 const (
 	tableName         = "votes"
+	userIDFieldName   = "userId"
 	battleIDFieldName = "battleId"
 )
 
 // RepositoryInterface defines an interface for a Vote repository
 type RepositoryInterface interface {
-	Add(Vote) error
+	Add(*Vote) error
+	GetByUserAndBattleIDs(string, string) (*Vote, error)
 }
 
 // Repository is an implementation of RepositoryInterface using DynamoDB
@@ -27,7 +29,7 @@ func NewRepository(client *dynamodb.DynamoDB) *Repository {
 }
 
 // Add is used to insert a new Vote document
-func (repository *Repository) Add(vote Vote) error {
+func (repository *Repository) Add(vote *Vote) error {
 	item, err := dynamodbattribute.MarshalMap(vote)
 	if err != nil {
 		return err
@@ -39,4 +41,28 @@ func (repository *Repository) Add(vote Vote) error {
 		ConditionExpression: &conditionExpression,
 	})
 	return err
+}
+
+// GetByUserAndBattleIDs is used to get a Vote by user ID and battle ID
+func (repository *Repository) GetByUserAndBattleIDs(userID string, battleID string) (*Vote, error) {
+	result, err := repository.client.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			userIDFieldName: {
+				S: aws.String(userID),
+			},
+			battleIDFieldName: {
+				S: aws.String(battleID),
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	vote := &Vote{}
+	err = dynamodbattribute.UnmarshalMap(result.Item, vote)
+	if err != nil {
+		return nil, err
+	}
+	return vote, nil
 }

@@ -35,7 +35,7 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	if err != nil {
 		return nil, err
 	}
-	vote := votes.Vote{
+	vote := &votes.Vote{
 		UserID:    input.AuthContext.UserID,
 		BattleID:  battleID,
 		IsVoteFor: request.IsVoteFor,

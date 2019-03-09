@@ -10,6 +10,8 @@ import (
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	"github.com/bitterbattles/api/pkg/ranks"
 	"github.com/bitterbattles/api/pkg/redis"
+	"github.com/bitterbattles/api/pkg/users"
+	"github.com/bitterbattles/api/pkg/votes"
 )
 
 func main() {
@@ -18,7 +20,9 @@ func main() {
 	battlesRepository := battles.NewRepository(dynamoClient)
 	redisClient := redis.NewClient(os.Getenv("REDIS_ADDRESS"))
 	ranksRepository := ranks.NewRepository(redisClient)
-	processor := NewProcessor(battlesRepository, ranksRepository)
+	usersRepository := users.NewRepository(dynamoClient)
+	votesRepository := votes.NewRepository(dynamoClient)
+	processor := NewProcessor(battlesRepository, ranksRepository, usersRepository, votesRepository)
 	handler := api.NewHandler(false, os.Getenv("TOKEN_SECRET"), processor)
 	lambda.StartHandler(handler)
 }

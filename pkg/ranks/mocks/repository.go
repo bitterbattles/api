@@ -34,11 +34,10 @@ func (repository *Repository) DeleteByBattleID(category string, battleID string)
 
 // GetRankedBattleIDs gets a range of Battle IDs by category, sorted by score
 func (repository *Repository) GetRankedBattleIDs(category string, offset int, limit int) ([]string, error) {
-	_, ok := repository.data[category]
-	if !ok {
+	allEntries := repository.data[category]
+	if allEntries == nil {
 		return []string{}, nil
 	}
-	allEntries := repository.data[category]
 	length := len(allEntries)
 	if offset >= length {
 		return []string{}, nil

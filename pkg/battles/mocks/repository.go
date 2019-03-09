@@ -1,8 +1,6 @@
 package mocks
 
 import (
-	"errors"
-
 	"github.com/bitterbattles/api/pkg/battles"
 )
 
@@ -32,23 +30,17 @@ func (repository *Repository) DeleteByID(id string) error {
 
 // GetByID is used to get a Battle by ID
 func (repository *Repository) GetByID(id string) (*battles.Battle, error) {
-	_, ok := repository.data[id]
-	if !ok {
-		return nil, nil
-	}
 	return repository.data[id], nil
 }
 
 // IncrementVotes increments the votes for a given Battle ID
 func (repository *Repository) IncrementVotes(id string, deltaVotesFor int, deltaVotesAgainst int) error {
-	_, ok := repository.data[id]
-	if !ok {
-		return errors.New("battle not found")
-	}
 	battle := repository.data[id]
-	battle.VotesFor += deltaVotesFor
-	battle.VotesAgainst += deltaVotesAgainst
-	repository.data[id] = battle
+	if battle != nil {
+		battle.VotesFor += deltaVotesFor
+		battle.VotesAgainst += deltaVotesAgainst
+		repository.data[id] = battle
+	}
 	return nil
 }
 

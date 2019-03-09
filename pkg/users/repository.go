@@ -10,12 +10,14 @@ import (
 
 const (
 	tableName     = "users"
+	idFieldName   = "id"
 	usernameIndex = "username"
 )
 
 // RepositoryInterface defines an interface for a User repository
 type RepositoryInterface interface {
 	Add(*User) error
+	GetByID(string) (*User, error)
 	GetByUsername(string) (*User, error)
 }
 
@@ -40,6 +42,27 @@ func (repository *Repository) Add(user *User) error {
 		Item:      item,
 	})
 	return err
+}
+
+// GetByID is used to get a User by ID
+func (repository *Repository) GetByID(id string) (*User, error) {
+	result, err := repository.client.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			idFieldName: {
+				S: aws.String(id),
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	user := &User{}
+	err = dynamodbattribute.UnmarshalMap(result.Item, user)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 // GetByUsername looks up a User with the specified username

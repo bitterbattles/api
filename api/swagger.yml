@@ -167,10 +167,14 @@ definitions:
       properties:
         id:
           type: string
+        username:
+          type: string
         title:
           type: string
         description:
           type: string
+        canVote:
+          type: boolealn
         votesFor:
           type: integer
         votesAgainst:

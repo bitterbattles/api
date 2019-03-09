@@ -7,6 +7,8 @@ import (
 	"github.com/bitterbattles/api/pkg/input"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	"github.com/bitterbattles/api/pkg/ranks"
+	"github.com/bitterbattles/api/pkg/users"
+	"github.com/bitterbattles/api/pkg/votes"
 )
 
 const (
@@ -19,19 +21,28 @@ const (
 	minPageSize     = 1
 	maxPageSize     = 100
 	defaultPageSize = 50
+	defaultUsername = "[Deleted]"
 )
 
 // Processor represents a request processor
 type Processor struct {
 	battlesRepository battles.RepositoryInterface
 	ranksRepository   ranks.RepositoryInterface
+	usersRepository   users.RepositoryInterface
+	votesRepository   votes.RepositoryInterface
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(battlesRepository battles.RepositoryInterface, ranksRepository ranks.RepositoryInterface) *Processor {
+func NewProcessor(
+	battlesRepository battles.RepositoryInterface,
+	ranksRepository ranks.RepositoryInterface,
+	usersRepository users.RepositoryInterface,
+	votesRepository votes.RepositoryInterface) *Processor {
 	return &Processor{
 		battlesRepository: battlesRepository,
 		ranksRepository:   ranksRepository,
+		usersRepository:   usersRepository,
+		votesRepository:   votesRepository,
 	}
 }
 
@@ -56,8 +67,15 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 			return nil, err
 		}
 		if battle != nil {
-			response := Response(*battle)
-			responses = append(responses, &response)
+			user, err := processor.usersRepository.GetByID(battle.UserID)
+			if err != nil {
+				return nil, err
+			}
+			vote, err := processor.votesRepository.GetByUserAndBattleIDs(battle.UserID, battle.ID)
+			if err != nil {
+				return nil, err
+			}
+			responses = append(responses, processor.toResponse(battle, user, vote))
 		} else {
 			log.Println("Failed to find battle ID", id, "referenced in", sort, "ranking.")
 		}
@@ -121,4 +139,25 @@ func (processor *Processor) sanitizePageSize(pageSizeString string) int {
 	}
 	pageSize, _ := input.SanitizeIntegerFromString(pageSizeString, rules, nil)
 	return pageSize
+}
+
+func (processor *Processor) toResponse(battle *battles.Battle, user *users.User, vote *votes.Vote) *Response {
+	username := defaultUsername
+	if user != nil && user.State == users.Active {
+		username = user.DisplayUsername
+	}
+	var canVote bool
+	if vote == nil {
+		canVote = true
+	}
+	return &Response{
+		ID:           battle.ID,
+		Username:     username,
+		Title:        battle.Title,
+		Description:  battle.Description,
+		CanVote:      canVote,
+		VotesFor:     battle.VotesFor,
+		VotesAgainst: battle.VotesAgainst,
+		CreatedOn:    battle.CreatedOn,
+	}
 }
