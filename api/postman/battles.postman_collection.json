@@ -41,7 +41,14 @@
 			"name": "Get Paginated",
 			"request": {
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text",
+						"disabled": true
+					}
+				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
