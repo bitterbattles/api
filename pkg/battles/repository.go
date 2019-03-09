@@ -86,6 +86,9 @@ func (repository *Repository) GetByID(id string) (*Battle, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(result.Item) == 0 {
+		return nil, nil
+	}
 	battle := &Battle{}
 	err = dynamodbattribute.UnmarshalMap(result.Item, battle)
 	if err != nil {

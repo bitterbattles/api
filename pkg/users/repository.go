@@ -57,6 +57,9 @@ func (repository *Repository) GetByID(id string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(result.Item) == 0 {
+		return nil, nil
+	}
 	user := &User{}
 	err = dynamodbattribute.UnmarshalMap(result.Item, user)
 	if err != nil {

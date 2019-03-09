@@ -56,13 +56,17 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	sort := processor.sanitizeSort(input.QueryParams[sortParam])
 	page := processor.sanitizePage(input.QueryParams[pageParam])
 	pageSize := processor.sanitizePageSize(input.QueryParams[pageSizeParam])
-	ids, err := processor.getIDs(sort, page, pageSize)
+	battleIDs, err := processor.getBattleIDs(sort, page, pageSize)
 	if err != nil {
 		return nil, err
 	}
-	responses := make([]*Response, 0, len(ids))
-	for _, id := range ids {
-		battle, err := processor.getBattle(id)
+	var userID string
+	if input.AuthContext != nil {
+		userID = input.AuthContext.UserID
+	}
+	responses := make([]*Response, 0, len(battleIDs))
+	for _, battleID := range battleIDs {
+		battle, err := processor.getBattle(battleID)
 		if err != nil {
 			return nil, err
 		}
@@ -72,37 +76,19 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 				return nil, err
 			}
 			var vote *votes.Vote
-			if input.AuthContext != nil && input.AuthContext.UserID != "" {
-				vote, err = processor.votesRepository.GetByUserAndBattleIDs(input.AuthContext.UserID, battle.ID)
+			if userID != "" {
+				vote, err = processor.votesRepository.GetByUserAndBattleIDs(userID, battleID)
 				if err != nil {
 					return nil, err
 				}
 			}
 			responses = append(responses, processor.toResponse(battle, user, vote))
 		} else {
-			log.Println("Failed to find battle ID", id, "referenced in", sort, "ranking.")
+			log.Println("Failed to find battle ID", battleID, "referenced in", sort, "ranking.")
 		}
 	}
 	output := api.NewOutput(responses)
 	return output, nil
-}
-
-func (processor *Processor) getIDs(sort string, page int, pageSize int) ([]string, error) {
-	offset := (page - 1) * pageSize
-	limit := pageSize
-	ids, err := processor.ranksRepository.GetRankedBattleIDs(sort, offset, limit)
-	if err != nil {
-		return nil, err
-	}
-	return ids, nil
-}
-
-func (processor *Processor) getBattle(id string) (*battles.Battle, error) {
-	battle, err := processor.battlesRepository.GetByID(id)
-	if err != nil {
-		return nil, err
-	}
-	return battle, nil
 }
 
 func (processor *Processor) sanitizeSort(sort string) string {
@@ -142,6 +128,24 @@ func (processor *Processor) sanitizePageSize(pageSizeString string) int {
 	}
 	pageSize, _ := input.SanitizeIntegerFromString(pageSizeString, rules, nil)
 	return pageSize
+}
+
+func (processor *Processor) getBattleIDs(sort string, page int, pageSize int) ([]string, error) {
+	offset := (page - 1) * pageSize
+	limit := pageSize
+	ids, err := processor.ranksRepository.GetRankedBattleIDs(sort, offset, limit)
+	if err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
+
+func (processor *Processor) getBattle(id string) (*battles.Battle, error) {
+	battle, err := processor.battlesRepository.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+	return battle, nil
 }
 
 func (processor *Processor) toResponse(battle *battles.Battle, user *users.User, vote *votes.Vote) *Response {

@@ -59,6 +59,9 @@ func (repository *Repository) GetByUserAndBattleIDs(userID string, battleID stri
 	if err != nil {
 		return nil, err
 	}
+	if len(result.Item) == 0 {
+		return nil, nil
+	}
 	vote := &Vote{}
 	err = dynamodbattribute.UnmarshalMap(result.Item, vote)
 	if err != nil {
