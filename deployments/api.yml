@@ -9,12 +9,6 @@ Parameters:
   BattlesTableWCUs:
     Type: Number
     Default: 1
-  BattlesTableUserIdRCUs:
-    Type: Number
-    Default: 1
-  BattlesTableUserIdWCUs:
-    Type: Number
-    Default: 1
   UsersTableRCUs:
     Type: Number
     Default: 1
@@ -104,21 +98,9 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
-        - AttributeName: userId
-          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      GlobalSecondaryIndexes:
-        - IndexName: userId
-          KeySchema:
-            - AttributeName: userId
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
-          ProvisionedThroughput:
-            ReadCapacityUnits: !Ref BattlesTableUserIdRCUs
-            WriteCapacityUnits: !Ref BattlesTableUserIdWCUs
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
   UsersTable:
@@ -340,6 +322,23 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup
+  UsersMeBattlesGetLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: users-me-battles-get
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: users-me-battles-get.zip
+      Runtime: go1.x
+      Handler: users-me-battles-get
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
   VotesPostLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -357,6 +356,23 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup
+  VotesMeBattlesGetLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: votes-me-battles-get
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: votes-me-battles-get.zip
+      Runtime: go1.x
+      Handler: votes-me-battles-get
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup  
   VotesStreamLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -508,6 +524,37 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/users", API: !Ref API]
+  UsersMeResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !Ref UsersResource
+      PathPart: "me"
+  UsersMeBattlesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !Ref UsersMeResource
+      PathPart: "battles"
+  UsersMeBattlesGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref UsersMeBattlesResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt UsersMeBattleGetLambda.Arn]
+        PassthroughBehavior: NEVER
+  UsersMeBattlesGetPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt UsersMeBattlesGetLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/users/me/battles", API: !Ref API]
   VotesResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -533,6 +580,37 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/votes", API: !Ref API]
+  VotesMeResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !Ref VotesResource
+      PathPart: "me"
+  VotesMeBattlesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !Ref VotesMeResource
+      PathPart: "battles"
+  VotesMeBattlesGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref VotesMeBattlesResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt VotesMeBattleGetLambda.Arn]
+        PassthroughBehavior: NEVER
+  VotesMeBattlesGetPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt VotesMeBattlesGetLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/votes/me/battles", API: !Ref API]
   Certificate:
     Type: AWS::CertificateManager::Certificate
     Properties:

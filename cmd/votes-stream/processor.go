@@ -11,12 +11,14 @@ import (
 
 // Processor represents a stream processor
 type Processor struct {
+	indexer    *battles.Indexer
 	repository battles.RepositoryInterface
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(repository battles.RepositoryInterface) *Processor {
+func NewProcessor(indexer *battles.Indexer, repository battles.RepositoryInterface) *Processor {
 	return &Processor{
+		indexer:    indexer,
 		repository: repository,
 	}
 }
@@ -28,10 +30,7 @@ func (processor *Processor) Process(event *stream.Event) error {
 		processor.captureChange(&record, changes)
 	}
 	for battleID, change := range changes {
-		err := processor.repository.IncrementVotes(battleID, change.deltaVotesFor, change.deltaVotesAgainst)
-		if err != nil {
-			log.Println("Failed to increment votes. Error:", err)
-		}
+		processor.processChange(battleID, change)
 	}
 	return nil
 }
@@ -52,11 +51,27 @@ func (processor *Processor) captureChange(record *stream.EventRecord, changes ma
 	c, ok := changes[battleID]
 	if !ok {
 		c = &change{}
+		c.userIDs = make([]string, 0)
 	}
+	c.userIDs = append(c.userIDs, vote.UserID)
 	if vote.IsVoteFor {
 		c.deltaVotesFor++
 	} else {
 		c.deltaVotesAgainst++
 	}
 	changes[battleID] = c
+}
+
+func (processor *Processor) processChange(battleID string, change *change) {
+	var err error
+	err = processor.repository.IncrementVotes(battleID, change.deltaVotesFor, change.deltaVotesAgainst)
+	if err != nil {
+		log.Println("Failed to increment votes. Error:", err)
+	}
+	for _, userID := range change.userIDs {
+		err = processor.indexer.AddVoter(userID, battleID)
+		if err != nil {
+			log.Println("Failed to index battle vote. Error:", err)
+		}
+	}
 }

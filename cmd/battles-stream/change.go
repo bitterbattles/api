@@ -1,10 +1,8 @@
 package main
 
+import "github.com/bitterbattles/api/pkg/battles"
+
 type change struct {
-	createdOnChanged bool
-	newCreatedOn     int64
-	votesChanged     bool
-	newVotesFor      int
-	newVotesAgainst  int
-	deleted          bool
+	oldBattle *battles.Battle
+	newBattle *battles.Battle
 }

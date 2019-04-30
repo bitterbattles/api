@@ -31,6 +31,45 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Get My Battles",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{accessToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{apiRoot}}/users/me/battles?page=1&pageSize=10",
+					"host": [
+						"{{apiRoot}}"
+					],
+					"path": [
+						"users",
+						"me",
+						"battles"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "pageSize",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }

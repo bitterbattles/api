@@ -29,18 +29,8 @@ paths:
             - popular
             - controversial
           default: recent
-        - in: query
-          name: page
-          description: The pagination page number.
-          required: false
-          type: integer
-          default: 1
-        - in: query
-          name: pageSize
-          description: The pagination page size.
-          required: false
-          type: integer
-          default: 50
+        - $ref: "#/parameters/page"
+        - $ref: "#/parameters/pageSize"
       responses:
         200:
           description: Success.
@@ -122,6 +112,20 @@ paths:
           description: One or more of the request body parameters is invalid.
           schema:
             $ref: "#/definitions/errorResponse"
+  /users/me/battles:
+    get:
+      tags:
+        - users
+      summary: Get my battles
+      description: Gets battles created by the current user.
+      parameters:
+        - $ref: "#/parameters/page"
+        - $ref: "#/parameters/pageSize"
+      responses:
+        200:
+          description: Success.
+          schema:
+            $ref: "#/definitions/battleList"
   /votes:
     post:
       tags:
@@ -142,6 +146,35 @@ paths:
           description: One or more of the request body parameters is invalid.
           schema:
             $ref: "#/definitions/errorResponse"
+  /votes/me/battles:
+    get:
+      tags:
+        - votes
+      summary: Get battles I've voted on
+      description: Gets battles that the current user has voted on.
+      parameters:
+        - $ref: "#/parameters/page"
+        - $ref: "#/parameters/pageSize"
+      responses:
+        200:
+          description: Success.
+          schema:
+            $ref: "#/definitions/battleList"
+parameters:
+  page:
+    in: query
+    name: page
+    description: The pagination page number.
+    required: false
+    type: integer
+    default: 1
+  pageSize:
+    in: query
+    name: pageSize
+    description: The pagination page size.
+    required: false
+    type: integer
+    default: 50
 definitions:
   errorResponse:
     type: object
@@ -173,8 +206,8 @@ definitions:
           type: string
         description:
           type: string
-        canVote:
-          type: boolealn
+        hasVoted:
+          type: boolean
         votesFor:
           type: integer
         votesAgainst:

@@ -6,7 +6,6 @@ import (
 	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	"github.com/bitterbattles/api/pkg/users"
-	"github.com/bitterbattles/api/pkg/votes"
 )
 
 // Processor represents a request processor
@@ -14,20 +13,14 @@ type Processor struct {
 	indexer           *battles.Indexer
 	battlesRepository battles.RepositoryInterface
 	usersRepository   users.RepositoryInterface
-	votesRepository   votes.RepositoryInterface
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(
-	indexer *battles.Indexer,
-	battlesRepository battles.RepositoryInterface,
-	usersRepository users.RepositoryInterface,
-	votesRepository votes.RepositoryInterface) *Processor {
+func NewProcessor(indexer *battles.Indexer, battlesRepository battles.RepositoryInterface, usersRepository users.RepositoryInterface) *Processor {
 	return &Processor{
 		indexer:           indexer,
 		battlesRepository: battlesRepository,
 		usersRepository:   usersRepository,
-		votesRepository:   votesRepository,
 	}
 }
 
@@ -38,14 +31,10 @@ func (processor *Processor) NewRequestBody() interface{} {
 
 // Process processes a request
 func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
-	sort := battles.GetSort(input)
 	page := battles.GetPage(input)
 	pageSize := battles.GetPageSize(input)
-	var userID string
-	if input.AuthContext != nil {
-		userID = input.AuthContext.UserID
-	}
-	battleIDs, err := processor.indexer.GetGlobal(sort, page, pageSize)
+	userID := input.AuthContext.UserID
+	battleIDs, err := processor.indexer.GetByVoter(userID, page, pageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -60,16 +49,9 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 			if err != nil {
 				return nil, err
 			}
-			var vote *votes.Vote
-			if userID != "" {
-				vote, err = processor.votesRepository.GetByUserAndBattleIDs(userID, battleID)
-				if err != nil {
-					return nil, err
-				}
-			}
-			responses = append(responses, battles.ToGetResponse(battle, user, vote != nil))
+			responses = append(responses, battles.ToGetResponse(battle, user, true))
 		} else {
-			log.Println("Failed to find battle ID", battleID, "referenced in", sort, "index.")
+			log.Println("Failed to find battle ID", battleID, "referenced in voter", userID, "index.")
 		}
 	}
 	output := api.NewOutput(responses)
