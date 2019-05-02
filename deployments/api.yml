@@ -30,6 +30,8 @@ Parameters:
   RedisNodeType:
     Type: String
     Default: cache.t2.micro
+  TokenSecret:
+    Type: String
 Conditions:
   IsProd:
     !Equals [!Ref EnvName, "prod"]
@@ -226,6 +228,7 @@ Resources:
       Environment:
         Variables:
           REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          TOKEN_SECRET: !Ref TokenSecret
   BattlesPostLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -243,6 +246,10 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          TOKEN_SECRET: !Ref TokenSecret
   BattlesIdDeleteLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -260,6 +267,10 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          TOKEN_SECRET: !Ref TokenSecret
   BattlesStreamLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -280,6 +291,7 @@ Resources:
       Environment:
         Variables:
           REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          TOKEN_SECRET: !Ref TokenSecret
   BattlesStreamTrigger:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
@@ -305,6 +317,10 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          TOKEN_SECRET: !Ref TokenSecret
   UsersPostLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -322,6 +338,10 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          TOKEN_SECRET: !Ref TokenSecret
   UsersMeBattlesGetLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -339,6 +359,10 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          TOKEN_SECRET: !Ref TokenSecret
   VotesPostLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -356,6 +380,10 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          TOKEN_SECRET: !Ref TokenSecret
   VotesMeBattlesGetLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -373,6 +401,10 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup  
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          TOKEN_SECRET: !Ref TokenSecret
   VotesStreamLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -390,6 +422,10 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          TOKEN_SECRET: !Ref TokenSecret
   VotesStreamTrigger:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
@@ -546,7 +582,7 @@ Resources:
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt UsersMeBattleGetLambda.Arn]
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt UsersMeBattlesGetLambda.Arn]
         PassthroughBehavior: NEVER
   UsersMeBattlesGetPermission:
     Type: AWS::Lambda::Permission
@@ -602,7 +638,7 @@ Resources:
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt VotesMeBattleGetLambda.Arn]
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt VotesMeBattlesGetLambda.Arn]
         PassthroughBehavior: NEVER
   VotesMeBattlesGetPermission:
     Type: AWS::Lambda::Permission
