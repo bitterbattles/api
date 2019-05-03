@@ -6,47 +6,14 @@
 	},
 	"item": [
 		{
-			"name": "Create",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Bearer {{accessToken}}",
-						"type": "text"
-					},
-					{
-						"key": "Content-Type",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"title\": \"title\",\n\t\"description\": \"description\"\n}"
-				},
-				"url": {
-					"raw": "{{apiRoot}}/battles",
-					"host": [
-						"{{apiRoot}}"
-					],
-					"path": [
-						"battles"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get Paginated",
+			"name": "Get All Battles Paginated",
 			"request": {
 				"method": "GET",
 				"header": [
 					{
 						"key": "Authorization",
 						"value": "Bearer {{accessToken}}",
-						"type": "text",
-						"disabled": true
+						"type": "text"
 					}
 				],
 				"body": {
@@ -80,7 +47,39 @@
 			"response": []
 		},
 		{
-			"name": "Delete by ID",
+			"name": "Post Battle",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"title\": \"title\",\n\t\"description\": \"description\"\n}"
+				},
+				"url": {
+					"raw": "{{apiRoot}}/battles",
+					"host": [
+						"{{apiRoot}}"
+					],
+					"path": [
+						"battles"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Battle by ID",
 			"request": {
 				"method": "DELETE",
 				"header": [

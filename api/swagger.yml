@@ -19,16 +19,7 @@ paths:
       summary: List battles
       description: Gets a list of battles.
       parameters:
-        - in: query
-          name: sort
-          description: How to sort the returned list.
-          required: false
-          type: string
-          enum:
-            - recent
-            - popular
-            - controversial
-          default: recent
+        - $ref: "#/parameters/sort"
         - $ref: "#/parameters/page"
         - $ref: "#/parameters/pageSize"
       responses:
@@ -119,6 +110,7 @@ paths:
       summary: Get my battles
       description: Gets battles created by the current user.
       parameters:
+        - $ref: "#/parameters/sort"
         - $ref: "#/parameters/page"
         - $ref: "#/parameters/pageSize"
       responses:
@@ -161,6 +153,17 @@ paths:
           schema:
             $ref: "#/definitions/battleList"
 parameters:
+  sort:
+    in: query
+    name: sort
+    description: How to sort the returned list.
+    required: false
+    type: string
+    enum:
+      - recent
+      - popular
+      - controversial
+    default: recent
   page:
     in: query
     name: page

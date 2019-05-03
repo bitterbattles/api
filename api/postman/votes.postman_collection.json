@@ -6,7 +6,7 @@
 	},
 	"item": [
 		{
-			"name": "Create",
+			"name": "Vote",
 			"request": {
 				"method": "POST",
 				"header": [

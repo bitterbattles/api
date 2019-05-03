@@ -590,7 +590,7 @@ Resources:
       FunctionName: !GetAtt UsersMeBattlesGetLambda.Arn
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/users/me/battles", API: !Ref API]
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/GET/users/me/battles", API: !Ref API]
   VotesResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -646,7 +646,7 @@ Resources:
       FunctionName: !GetAtt VotesMeBattlesGetLambda.Arn
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/votes/me/battles", API: !Ref API]
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/GET/votes/me/battles", API: !Ref API]
   Certificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
