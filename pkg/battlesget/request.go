@@ -1,6 +1,7 @@
-package battles
+package battlesget
 
 import (
+	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/input"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 )
@@ -9,7 +10,7 @@ const (
 	sortParam       = "sort"
 	pageParam       = "page"
 	pageSizeParam   = "pageSize"
-	defaultSort     = RecentSort
+	defaultSort     = battles.RecentSort
 	minPage         = 1
 	defaultPage     = 1
 	minPageSize     = 1
@@ -23,7 +24,7 @@ func GetSort(i *api.Input) string {
 	rules := input.StringRules{
 		ToLower:      true,
 		TrimSpace:    true,
-		ValidValues:  []string{RecentSort, PopularSort, ControversialSort},
+		ValidValues:  []string{battles.RecentSort, battles.PopularSort, battles.ControversialSort},
 		DefaultValue: defaultSort,
 	}
 	sort, _ = input.SanitizeString(sort, rules, nil)

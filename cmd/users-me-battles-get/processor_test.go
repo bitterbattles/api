@@ -22,7 +22,7 @@ func TestProcessor(t *testing.T) {
 	indexRepository := indexMocks.NewRepository()
 	battlesRepository := battlesMocks.NewRepository()
 	addBattles(indexRepository, battlesRepository, "userId0", testSort, 3)
-	expectedResponse := `[{"id":"id0","username":"UserID0","title":"title0","description":"description0","hasVoted":true,"votesFor":0,"votesAgainst":0,"createdOn":0},{"id":"id1","username":"UserID0","title":"title1","description":"description1","hasVoted":true,"votesFor":1,"votesAgainst":2,"createdOn":3}]`
+	expectedResponse := `[{"id":"id0","username":"UserID0","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"createdOn":0},{"id":"id1","username":"UserID0","title":"title1","description":"description1","canVote":false,"votesFor":1,"votesAgainst":2,"createdOn":3}]`
 	authContext := &api.AuthContext{
 		UserID: "userId0",
 	}

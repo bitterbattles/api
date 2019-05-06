@@ -1,6 +1,7 @@
-package battles
+package battlesget
 
 import (
+	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/users"
 )
 
@@ -8,20 +9,20 @@ const (
 	defaultUsername = "[Deleted]"
 )
 
-// Response represents an element in the GET response
+// Response a Battle in a GET response
 type Response struct {
 	ID           string `json:"id"`
 	Username     string `json:"username"`
 	Title        string `json:"title"`
 	Description  string `json:"description"`
-	HasVoted     bool   `json:"hasVoted"`
+	CanVote      bool   `json:"canVote"`
 	VotesFor     int    `json:"votesFor"`
 	VotesAgainst int    `json:"votesAgainst"`
 	CreatedOn    int64  `json:"createdOn"`
 }
 
-// ToGetResponse converts a Battle to a GET response
-func ToGetResponse(battle *Battle, user *users.User, hasVoted bool) *Response {
+// ToResponse converts a Battle to a GET response
+func ToResponse(battle *battles.Battle, user *users.User, canVote bool) *Response {
 	username := defaultUsername
 	if user != nil && user.State == users.Active {
 		username = user.DisplayUsername
@@ -31,7 +32,7 @@ func ToGetResponse(battle *Battle, user *users.User, hasVoted bool) *Response {
 		Username:     username,
 		Title:        battle.Title,
 		Description:  battle.Description,
-		HasVoted:     hasVoted,
+		CanVote:      canVote,
 		VotesFor:     battle.VotesFor,
 		VotesAgainst: battle.VotesAgainst,
 		CreatedOn:    battle.CreatedOn,

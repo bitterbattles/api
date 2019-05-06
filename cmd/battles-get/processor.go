@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/bitterbattles/api/pkg/battles"
+	"github.com/bitterbattles/api/pkg/battlesget"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	"github.com/bitterbattles/api/pkg/users"
 	"github.com/bitterbattles/api/pkg/votes"
@@ -38,40 +39,48 @@ func (processor *Processor) NewRequestBody() interface{} {
 
 // Process processes a request
 func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
-	sort := battles.GetSort(input)
-	page := battles.GetPage(input)
-	pageSize := battles.GetPageSize(input)
-	var userID string
-	if input.AuthContext != nil {
-		userID = input.AuthContext.UserID
-	}
+	sort := battlesget.GetSort(input)
+	page := battlesget.GetPage(input)
+	pageSize := battlesget.GetPageSize(input)
 	battleIDs, err := processor.indexer.GetGlobal(sort, page, pageSize)
 	if err != nil {
 		return nil, err
 	}
-	responses := make([]*battles.Response, 0, len(battleIDs))
+	var userID string
+	if input.AuthContext != nil {
+		userID = input.AuthContext.UserID
+	}
+	responses := make([]*battlesget.Response, 0, len(battleIDs))
 	for _, battleID := range battleIDs {
 		battle, err := processor.battlesRepository.GetByID(battleID)
 		if err != nil {
 			return nil, err
 		}
-		if battle != nil {
-			user, err := processor.usersRepository.GetByID(battle.UserID)
-			if err != nil {
-				return nil, err
-			}
-			var vote *votes.Vote
-			if userID != "" {
-				vote, err = processor.votesRepository.GetByUserAndBattleIDs(userID, battleID)
-				if err != nil {
-					return nil, err
-				}
-			}
-			responses = append(responses, battles.ToGetResponse(battle, user, vote != nil))
-		} else {
+		if battle == nil {
 			log.Println("Failed to find battle ID", battleID, "referenced in", sort, "index.")
+			continue
 		}
+		user, err := processor.usersRepository.GetByID(battle.UserID)
+		if err != nil {
+			return nil, err
+		}
+		canVote, err := processor.getCanVote(userID, battle)
+		if err != nil {
+			return nil, err
+		}
+		responses = append(responses, battlesget.ToResponse(battle, user, canVote))
 	}
 	output := api.NewOutput(responses)
 	return output, nil
+}
+
+func (processor *Processor) getCanVote(userID string, battle *battles.Battle) (bool, error) {
+	if userID == "" || userID == battle.UserID {
+		return false, nil
+	}
+	vote, err := processor.votesRepository.GetByUserAndBattleIDs(userID, battle.ID)
+	if err != nil {
+		return false, err
+	}
+	return (vote == nil), nil
 }

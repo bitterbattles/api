@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/bitterbattles/api/pkg/battles"
+	"github.com/bitterbattles/api/pkg/battlesget"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	"github.com/bitterbattles/api/pkg/users"
 )
@@ -31,9 +32,9 @@ func (processor *Processor) NewRequestBody() interface{} {
 
 // Process processes a request
 func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
-	sort := battles.GetSort(input)
-	page := battles.GetPage(input)
-	pageSize := battles.GetPageSize(input)
+	sort := battlesget.GetSort(input)
+	page := battlesget.GetPage(input)
+	pageSize := battlesget.GetPageSize(input)
 	userID := input.AuthContext.UserID
 	user, err := processor.usersRepository.GetByID(userID)
 	if err != nil {
@@ -43,17 +44,16 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	if err != nil {
 		return nil, err
 	}
-	responses := make([]*battles.Response, 0, len(battleIDs))
+	responses := make([]*battlesget.Response, 0, len(battleIDs))
 	for _, battleID := range battleIDs {
 		battle, err := processor.battlesRepository.GetByID(battleID)
 		if err != nil {
 			return nil, err
 		}
-		if battle != nil {
-			responses = append(responses, battles.ToGetResponse(battle, user, true))
-		} else {
+		if battle == nil {
 			log.Println("Failed to find battle ID", battleID, "referenced in author", userID, "+", sort, "index.")
 		}
+		responses = append(responses, battlesget.ToResponse(battle, user, false))
 	}
 	output := api.NewOutput(responses)
 	return output, nil
