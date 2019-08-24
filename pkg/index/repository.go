@@ -58,6 +58,6 @@ func (repository *Repository) HasMember(key string, member string) (bool, error)
 	if err != nil && err != redis.Nil {
 		return false, err
 	}
-	hasMember := (err == nil || err == redis.Nil)
+	hasMember := (err == nil)
 	return hasMember, nil
 }
