@@ -1,0 +1,42 @@
+{
+	"info": {
+		"_postman_id": "161a648b-debf-4061-b8ed-05cb5efe36e9",
+		"name": "Bitter Battles Admin API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "battles",
+			"item": [
+				{
+					"name": "Delete a battle",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{apiRoot}}/battles/bi0rt02ft3os72gmcdh0",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"battles",
+								"bi0rt02ft3os72gmcdh0"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

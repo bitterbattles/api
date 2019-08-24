@@ -73,6 +73,12 @@ func (indexer *Indexer) GetByVoter(userID string, page int, pageSize int) ([]str
 	return indexer.repository.GetRange(key, offset, limit)
 }
 
+// IsBattleAuthor determines whether or not the given user authored the given battle
+func (indexer *Indexer) IsBattleAuthor(userID string, battleID string) (bool, error) {
+	key := fmt.Sprintf(authorKeyPattern, userID, RecentSort)
+	return indexer.repository.HasMember(key, battleID)
+}
+
 // UpdateVotes updates indexes related to the Battle's votes
 func (indexer *Indexer) UpdateVotes(battle *Battle) error {
 	var key string

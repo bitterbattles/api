@@ -16,8 +16,8 @@ paths:
     get:
       tags:
         - battles
-      summary: List battles
-      description: Gets a list of battles.
+      summary: List all battles
+      description: Gets a list of all battles.
       parameters:
         - $ref: "#/parameters/sort"
         - $ref: "#/parameters/page"
@@ -46,21 +46,6 @@ paths:
           description: One or more of the request parameters is invalid.
           schema:
             $ref: "#/definitions/errorResponse"
-  /battles/{id}:
-    delete:
-      tags:
-        - battles
-      summary: Deletes a battle
-      description: Deletes an existing battle by ID.
-      parameters:
-        - in: path
-          name: id
-          description: The ID of the battle.
-          required: true
-          type: string
-      responses:
-        204:
-          description: Success.
   /logins:
     post:
       tags:
@@ -87,7 +72,7 @@ paths:
     post:
       tags:
         - users
-      summary: Create a user
+      summary: Sign up
       description: Registers a new user.
       parameters:
         - in: body
@@ -103,12 +88,44 @@ paths:
           description: One or more of the request body parameters is invalid.
           schema:
             $ref: "#/definitions/errorResponse"
+  /users/me:
+    patch:
+      tags:
+        - users
+      summary: Update my account
+      description: Updates my account details
+      parameters:
+        - in: body
+          name: body
+          description: The updates to apply.
+          required: true
+          schema:
+            $ref: "#/definitions/userUpdates"
+      responses:
+        204:
+          description: Success.
+        400:
+          description: One or more of the request body parameters is invalid.
+          schema:
+            $ref: "#/definitions/errorResponse"
+        403:
+          description: You are not allowed to modify the account in this way.
+          schema:
+            $ref: "#/definitions/errorResponse"
+    delete:
+      tags:
+        - users
+      summary: Delete my account
+      description: Deletes my account
+      responses:
+        204:
+          description: Success.
   /users/me/battles:
     get:
       tags:
-        - users
-      summary: Get my battles
-      description: Gets battles created by the current user.
+        - battles
+      summary: List my battles
+      description: Gets a list of battles created by me.
       parameters:
         - $ref: "#/parameters/sort"
         - $ref: "#/parameters/page"
@@ -118,6 +135,21 @@ paths:
           description: Success.
           schema:
             $ref: "#/definitions/battleList"
+  /users/me/battles/{id}:
+    delete:
+      tags:
+        - battles
+      summary: Delete one of my battles
+      description: Deletes one of my battles by ID.
+      parameters:
+        - $ref: "#/parameters/battleId"
+      responses:
+        204:
+          description: Success.
+        404:
+          description: The specified battle ID could not be found or was not authored by you.
+          schema:
+            $ref: "#/definitions/errorResponse"
   /votes:
     post:
       tags:
@@ -141,9 +173,9 @@ paths:
   /votes/me/battles:
     get:
       tags:
-        - votes
-      summary: Get battles I've voted on
-      description: Gets battles that the current user has voted on.
+        - battles
+      summary: List battles I've voted on
+      description: Gets a list of battles that the I have voted on.
       parameters:
         - $ref: "#/parameters/page"
         - $ref: "#/parameters/pageSize"
@@ -152,6 +184,55 @@ paths:
           description: Success.
           schema:
             $ref: "#/definitions/battleList"
+  /flags:
+    post:
+      tags:
+        - flags
+      summary: Record a flag
+      description: Creates a new flag.
+      parameters:
+        - in: body
+          name: body
+          description: The new flag to record.
+          required: true
+          schema:
+            $ref: "#/definitions/newFlag"
+      responses:
+        201:
+          description: Success.
+        400:
+          description: One or more of the request body parameters is invalid.
+          schema:
+            $ref: "#/definitions/errorResponse"
+  /flags/battles:
+    get:
+      tags:
+        - battles
+      summary: List flagged battles
+      description: Gets a list of flagged battles.
+      parameters:
+        - $ref: "#/parameters/page"
+        - $ref: "#/parameters/pageSize"
+      responses:
+        200:
+          description: Success.
+          schema:
+            $ref: "#/definitions/battleList"
+  /flags/battles/{id}:
+    delete:
+      tags:
+        - battles
+      summary: Delete a flagged battle
+      description: Deletes a flagged battle by ID.
+      parameters:
+        - $ref: "#/parameters/battleId"
+      responses:
+        204:
+          description: Success.
+        404:
+          description: The specified battle ID could not be found or is not flagged.
+          schema:
+            $ref: "#/definitions/errorResponse"
 parameters:
   sort:
     in: query
@@ -178,6 +259,12 @@ parameters:
     required: false
     type: integer
     default: 50
+  battleId:
+    in: path
+    name: id
+    description: The ID of the battle.
+    required: true
+    type: string
 definitions:
   errorResponse:
     type: object
@@ -215,6 +302,8 @@ definitions:
           type: integer
         votesAgainst:
           type: integer
+        isFlagged:
+          type: boolean
         createdOn:
           type: integer
           format: Epoch time (in seconds)
@@ -243,6 +332,15 @@ definitions:
     required:
       - username
       - password
+  userUpdates:
+    type: object
+    properties:
+      email:
+        type: string
+      username:
+        type: string
+      password:
+        type: string
   newVote:
     type: object
     properties:
@@ -253,3 +351,10 @@ definitions:
     required:
       - battleId
       - isVoteFor
+  newFlag:
+    type: object
+    properties:
+      battleId:
+        type: string
+    required:
+      - battleId

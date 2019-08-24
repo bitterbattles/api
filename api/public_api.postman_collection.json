@@ -1,0 +1,301 @@
+{
+	"info": {
+		"_postman_id": "b97a3aa2-fde5-4d46-8fe3-6bc5d33eb07c",
+		"name": "Bitter Battles API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "battles",
+			"item": [
+				{
+					"name": "List all battles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apiRoot}}/battles?sort=recent&page=1&pageSize=10",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"battles"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "recent"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create a battle",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"title\": \"title\",\n\t\"description\": \"description\"\n}"
+						},
+						"url": {
+							"raw": "{{apiRoot}}/battles",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"battles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List my battles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{apiRoot}}/users/me/battles?sort=recent&page=1&pageSize=10",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"users",
+								"me",
+								"battles"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "recent"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete one of my battles",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{apiRoot}}/users/me/battles/bi0rt02ft3os72gmcdh0",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"users",
+								"me",
+								"battles",
+								"bi0rt02ft3os72gmcdh0"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List battles I've voted on",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{apiRoot}}/votes/me/battles?page=1&pageSize=10",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"votes",
+								"me",
+								"battles"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "logins",
+			"item": [
+				{
+					"name": "Log in",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "208ab590-1ded-484a-bc8d-42c398561992",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.globals.set(\"accessToken\", jsonData.accessToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"username\",\n\t\"password\": \"P@ssw0rd\"\n}"
+						},
+						"url": {
+							"raw": "{{apiRoot}}/logins",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"logins"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "users",
+			"item": [
+				{
+					"name": "Sign up",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"username\",\n\t\"password\": \"P@ssw0rd\"\n}"
+						},
+						"url": {
+							"raw": "{{apiRoot}}/users",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "votes",
+			"item": [
+				{
+					"name": "Record a vote",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"battleId\": \"bi0slk0m4dic72afobd0\",\n\t\"isVoteFor\": true\n}"
+						},
+						"url": {
+							"raw": "{{apiRoot}}/votes",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"votes"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

@@ -9,6 +9,7 @@ type RepositoryInterface interface {
 	SetScore(string, string, float64) error
 	GetRange(string, int, int) ([]string, error)
 	Remove(string, string) error
+	HasMember(string, string) (bool, error)
 }
 
 // Repository is an implementation of RepositoryInterface using Redis
@@ -49,4 +50,14 @@ func (repository *Repository) GetRange(key string, offset int, limit int) ([]str
 func (repository *Repository) Remove(key string, member string) error {
 	_, err := repository.client.ZRem(key, member).Result()
 	return err
+}
+
+// HasMember determines if the member exists
+func (repository *Repository) HasMember(key string, member string) (bool, error) {
+	_, err := repository.client.ZScore(key, member).Result()
+	if err != nil && err != redis.Nil {
+		return false, err
+	}
+	hasMember := (err == nil || err == redis.Nil)
+	return hasMember, nil
 }

@@ -1,0 +1,57 @@
+swagger: "2.0"
+info:
+  description: The Bitter Battles Admin API.
+  version: "1.0"
+  title: Bitter Battles Admin
+host: api.bitterbattles.com
+basePath: /v1
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /battles/{id}:
+    delete:
+      tags:
+        - battles
+      summary: Delete a battle
+      description: Deletes an existing battle by ID.
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the battle.
+          required: true
+          type: string
+      responses:
+        204:
+          description: Success.
+  /users/{id}:
+    patch:
+      tags:
+        - users
+      summary: Update a user
+      description: Updates an existing user by ID
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the user.
+          required: true
+          type: string
+        - in: body
+          name: body
+          description: The updates to apply.
+          required: true
+          schema:
+            $ref: "#/definitions/userUpdates"
+      responses:
+        204:
+          description: Success.
+definitions:
+  userUpdates:
+    type: object
+    properties:
+      type:
+        type: string
+        enum: ["standard", "moderator"]

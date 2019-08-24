@@ -93,6 +93,19 @@ func (repository *Repository) GetScore(key string, member string) float64 {
 	return 0
 }
 
+// HasMember determines if the member exists
+func (repository *Repository) HasMember(key string, member string) (bool, error) {
+	entries := repository.data[key]
+	if entries != nil {
+		for _, entry := range entries {
+			if entry.Member == member {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
 // GetLastAdded gets the most recently added entry
 func (repository *Repository) GetLastAdded(key string) *Entry {
 	return repository.lastAdded[key]
