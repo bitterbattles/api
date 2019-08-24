@@ -42,6 +42,16 @@ func (repository *Repository) GetByUsername(username string) (*users.User, error
 	return repository.usernameData[username], nil
 }
 
+// DeleteByID deletes a User by ID
+func (repository *Repository) DeleteByID(id string) error {
+	user := repository.idData[id]
+	repository.idData[id] = nil
+	if user != nil {
+		repository.usernameData[user.Username] = nil
+	}
+	return nil
+}
+
 // GetLastAdded gets the most recently added User
 func (repository *Repository) GetLastAdded() *users.User {
 	return repository.lastAdded

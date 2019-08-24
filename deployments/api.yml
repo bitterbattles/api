@@ -203,6 +203,7 @@ Resources:
                   - dynamodb:GetItem
                   - dynamodb:PutItem
                   - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
                   - dynamodb:Query
                   - ec2:DescribeNetworkInterfaces
                   - ec2:CreateNetworkInterface
@@ -330,6 +331,27 @@ Resources:
         S3Key: users-post.zip
       Runtime: go1.x
       Handler: users-post
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          TOKEN_SECRET: !Ref TokenSecret
+  UsersMeDeleteLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: users-me-delete
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: users-me-delete.zip
+      Runtime: go1.x
+      Handler: users-me-delete
       Role: !GetAtt LambdaRole.Arn
       VpcConfig:
         SubnetIds:
@@ -587,6 +609,25 @@ Resources:
       RestApiId: !Ref API
       ParentId: !Ref UsersResource
       PathPart: "me"
+  UsersMeDeleteMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref UsersMeResource
+      HttpMethod: DELETE
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt UsersMeDeleteLambda.Arn]
+        PassthroughBehavior: NEVER
+  UsersMeDeletePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt UsersMeDeleteLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/DELETE/users/me", API: !Ref API]
   UsersMeBattlesResource:
     Type: AWS::ApiGateway::Resource
     Properties:

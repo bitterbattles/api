@@ -19,6 +19,7 @@ type RepositoryInterface interface {
 	Add(*User) error
 	GetByID(string) (*User, error)
 	GetByUsername(string) (*User, error)
+	DeleteByID(string) error
 }
 
 // Repository is an implementation of RepositoryInterface using DynamoDB
@@ -96,4 +97,24 @@ func (repository *Repository) GetByUsername(username string) (*User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+// DeleteByID deletes a User by ID
+func (repository *Repository) DeleteByID(id string) error {
+	conditionExpression := "id = :id"
+	_, err := repository.client.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			idFieldName: {
+				S: aws.String(id),
+			},
+		},
+		ConditionExpression: &conditionExpression,
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":id": {
+				S: aws.String(id),
+			},
+		},
+	})
+	return err
 }

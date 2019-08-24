@@ -257,6 +257,30 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Delete my account",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apiRoot}}/users/me",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"users",
+								"me"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
