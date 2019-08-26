@@ -60,6 +60,9 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 			log.Println("Failed to find battle ID", battleID, "referenced in", sort, "index.")
 			continue
 		}
+		if battle.State == battles.Deleted {
+			continue
+		}
 		user, err := processor.usersRepository.GetByID(battle.UserID)
 		if err != nil {
 			return nil, err

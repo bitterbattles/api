@@ -52,6 +52,10 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 		}
 		if battle == nil {
 			log.Println("Failed to find battle ID", battleID, "referenced in author", userID, "+", sort, "index.")
+			continue
+		}
+		if battle.State == battles.Deleted {
+			continue
 		}
 		responses = append(responses, battlesget.ToResponse(battle, user, false))
 	}

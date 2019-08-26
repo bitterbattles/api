@@ -16,10 +16,35 @@ import (
 	usersMocks "github.com/bitterbattles/api/pkg/users/mocks"
 )
 
+func TestProcessorBadIndexEntry(t *testing.T) {
+	userID := "userId0"
+	indexRepository := indexMocks.NewRepository()
+	key := fmt.Sprintf("battleIds:forVoter:%s", userID)
+	indexRepository.SetScore(key, "badId", 0)
+	battlesRepository := battlesMocks.NewRepository()
+	addBattles(indexRepository, battlesRepository, userID, false, 1)
+	expectedResponse := `[{"id":"id0","username":"UserID0","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"createdOn":0}]`
+	authContext := &api.AuthContext{
+		UserID: userID,
+	}
+	testProcessor(t, indexRepository, battlesRepository, authContext, "1", "2", expectedResponse)
+}
+
+func TestProcessorDeletedIndexEntry(t *testing.T) {
+	indexRepository := indexMocks.NewRepository()
+	battlesRepository := battlesMocks.NewRepository()
+	addBattles(indexRepository, battlesRepository, "userId0", true, 1)
+	expectedResponse := `[]`
+	authContext := &api.AuthContext{
+		UserID: "userId0",
+	}
+	testProcessor(t, indexRepository, battlesRepository, authContext, "1", "2", expectedResponse)
+}
+
 func TestProcessor(t *testing.T) {
 	indexRepository := indexMocks.NewRepository()
 	battlesRepository := battlesMocks.NewRepository()
-	addBattles(indexRepository, battlesRepository, "userId0", 3)
+	addBattles(indexRepository, battlesRepository, "userId0", false, 3)
 	expectedResponse := `[{"id":"id0","username":"UserID0","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"createdOn":0},{"id":"id1","username":"UserID0","title":"title1","description":"description1","canVote":false,"votesFor":1,"votesAgainst":2,"createdOn":3}]`
 	authContext := &api.AuthContext{
 		UserID: "userId0",
@@ -27,8 +52,12 @@ func TestProcessor(t *testing.T) {
 	testProcessor(t, indexRepository, battlesRepository, authContext, "1", "2", expectedResponse)
 }
 
-func addBattles(indexRepository *indexMocks.Repository, battlesRepository *battlesMocks.Repository, userID string, count int) {
+func addBattles(indexRepository *indexMocks.Repository, battlesRepository *battlesMocks.Repository, userID string, isDeleted bool, count int) {
 	key := fmt.Sprintf("battleIds:forVoter:%s", userID)
+	state := battles.Active
+	if isDeleted {
+		state = battles.Deleted
+	}
 	for i := 0; i < count; i++ {
 		battle := battles.Battle{
 			ID:           fmt.Sprintf("id%d", i),
@@ -38,7 +67,7 @@ func addBattles(indexRepository *indexMocks.Repository, battlesRepository *battl
 			VotesFor:     i,
 			VotesAgainst: i * 2,
 			CreatedOn:    int64(i * 3),
-			State:        battles.Active,
+			State:        state,
 		}
 		battlesRepository.Add(&battle)
 		indexRepository.SetScore(key, battle.ID, float64(i))

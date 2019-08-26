@@ -47,6 +47,10 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 		}
 		if battle == nil {
 			log.Println("Failed to find battle ID", battleID, "referenced in voter", userID, "index.")
+			continue
+		}
+		if battle.State == battles.Deleted {
+			continue
 		}
 		user, err := processor.usersRepository.GetByID(battle.UserID)
 		if err != nil {
