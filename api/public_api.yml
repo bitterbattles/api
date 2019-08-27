@@ -92,7 +92,7 @@ paths:
     patch:
       tags:
         - users
-      summary: Update my account
+      summary: "[NOT SUPPORTED YET] Update my account"
       description: Updates my account details
       parameters:
         - in: body
@@ -188,7 +188,7 @@ paths:
     post:
       tags:
         - flags
-      summary: Record a flag
+      summary: "[NOT SUPPORTED YET] Record a flag"
       description: Creates a new flag.
       parameters:
         - in: body
@@ -208,7 +208,7 @@ paths:
     get:
       tags:
         - battles
-      summary: List flagged battles
+      summary: "[NOT SUPPORTED YET] List flagged battles"
       description: Gets a list of flagged battles.
       parameters:
         - $ref: "#/parameters/page"
@@ -222,7 +222,7 @@ paths:
     delete:
       tags:
         - battles
-      summary: Delete a flagged battle
+      summary: "[NOT SUPPORTED YET] Delete a flagged battle"
       description: Deletes a flagged battle by ID.
       parameters:
         - $ref: "#/parameters/battleId"

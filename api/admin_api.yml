@@ -31,7 +31,7 @@ paths:
     patch:
       tags:
         - users
-      summary: Update a user
+      summary: "[NOT SUPPORTED YET] Update a user"
       description: Updates an existing user by ID
       parameters:
         - in: path
