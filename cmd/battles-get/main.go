@@ -24,6 +24,6 @@ func main() {
 	usersRepository := users.NewRepository(dynamoClient)
 	votesRepository := votes.NewRepository(dynamoClient)
 	processor := NewProcessor(indexer, battlesRepository, usersRepository, votesRepository)
-	handler := api.NewHandler(false, os.Getenv("TOKEN_SECRET"), processor)
+	handler := api.NewHandler(false, os.Getenv("ACCESS_TOKEN_SECRET"), processor)
 	lambda.StartHandler(handler)
 }

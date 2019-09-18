@@ -46,7 +46,10 @@ func DecodeHS256(token string, secret string, payload interface{}) error {
 	if header.Algorithm != HS256 {
 		return errors.New("unsupported JWT algorithm")
 	}
-	verifyHS256(parts[0], parts[1], parts[2], secret)
+	err = verifyHS256(parts[0], parts[1], parts[2], secret)
+	if err != nil {
+		return err
+	}
 	err = decode(parts[1], payload)
 	if err != nil {
 		return err

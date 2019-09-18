@@ -9,6 +9,7 @@ import (
 	"github.com/bitterbattles/api/pkg/errors"
 	"github.com/bitterbattles/api/pkg/http"
 	"github.com/bitterbattles/api/pkg/jwt"
+	"github.com/bitterbattles/api/pkg/time"
 )
 
 type errorResponse struct {
@@ -53,12 +54,15 @@ func (handler *Handler) Invoke(context context.Context, requestBytes []byte) (re
 		}
 		authParts := strings.Split(authorization, " ")
 		if len(authParts) != 2 || authParts[0] != "Bearer" {
-			return handler.newErrorResponse(http.Forbidden, "Malformed authorization header.")
+			return handler.newErrorResponse(http.Forbidden, "Malformed Authorization header.")
 		}
 		authContext = &AuthContext{}
 		err = jwt.DecodeHS256(authParts[1], handler.tokenSecret, authContext)
 		if err != nil {
 			return handler.newErrorResponse(http.Forbidden, "Invalid token.")
+		}
+		if authContext.ExpiresOn <= time.NowUnix() {
+			return handler.newErrorResponse(http.Forbidden, "Expired token.")
 		}
 	}
 	requestBody := handler.processor.NewRequestBody()

@@ -58,7 +58,29 @@ paths:
           description: The login credentials.
           required: true
           schema:
-            $ref: "#/definitions/credentials"
+            $ref: "#/definitions/loginCredentials"
+      responses:
+        201:
+          description: Success.
+          schema:
+            $ref: "#/definitions/loginResponse"
+        400:
+          description: One or more of the request body parameters is invalid.
+          schema:
+            $ref: "#/definitions/errorResponse"
+  /refreshes:
+    post:
+      tags:
+        - logins
+      summary: Refresh a login
+      description: Refreshes a login session.
+      parameters:
+        - in: body
+          name: body
+          description: The refresh credentials.
+          required: true
+          schema:
+            $ref: "#/definitions/refreshCredentials"
       responses:
         201:
           description: Success.
@@ -307,7 +329,7 @@ definitions:
         createdOn:
           type: integer
           format: Epoch time (in seconds)
-  credentials:
+  loginCredentials:
     type: object
     properties:
       username:
@@ -317,11 +339,24 @@ definitions:
     required:
       - username
       - password
+  refreshCredentials:
+    type: object
+    properties:
+      refreshToken:
+        type: string
+    required:
+      - refreshToken
   loginResponse:
     type: object
     properties:
       accessToken:
         type: string
+      accessExpiresIn:
+        type: integer
+      refreshToken:
+        type: string
+      refreshExpiresIn:
+        type: integer
   newUser:
     type: object
     properties:

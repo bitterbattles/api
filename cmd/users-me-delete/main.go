@@ -15,6 +15,6 @@ func main() {
 	dynamoClient := dynamo.NewClient(session)
 	repository := users.NewRepository(dynamoClient)
 	processor := NewProcessor(repository)
-	handler := api.NewHandler(false, os.Getenv("TOKEN_SECRET"), processor)
+	handler := api.NewHandler(false, os.Getenv("ACCESS_TOKEN_SECRET"), processor)
 	lambda.StartHandler(handler)
 }

@@ -195,7 +195,8 @@
 								"id": "208ab590-1ded-484a-bc8d-42c398561992",
 								"exec": [
 									"var jsonData = pm.response.json();",
-									"pm.globals.set(\"accessToken\", jsonData.accessToken);"
+									"pm.globals.set(\"accessToken\", jsonData.accessToken);",
+									"pm.globals.set(\"refreshToken\", jsonData.refreshToken);"
 								],
 								"type": "text/javascript"
 							}
@@ -221,6 +222,47 @@
 							],
 							"path": [
 								"logins"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh a login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "208ab590-1ded-484a-bc8d-42c398561992",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.globals.set(\"accessToken\", jsonData.accessToken);",
+									"pm.globals.set(\"refreshToken\", jsonData.refreshToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{apiRoot}}/refreshes",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"refreshes"
 							]
 						}
 					},

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/bitterbattles/api/pkg/crypto"
 	"github.com/bitterbattles/api/pkg/errors"
-	"github.com/bitterbattles/api/pkg/input"
+	"github.com/bitterbattles/api/pkg/jwt"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	"github.com/bitterbattles/api/pkg/loginspost"
+	"github.com/bitterbattles/api/pkg/time"
 	"github.com/bitterbattles/api/pkg/users"
 )
 
@@ -33,24 +33,20 @@ func (processor *Processor) NewRequestBody() interface{} {
 // Process processes a request
 func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	request, _ := input.RequestBody.(*Request)
-	username, err := processor.sanitizeUsername(request.Username)
+	authContext := &api.AuthContext{}
+	err := jwt.DecodeHS256(request.RefreshToken, processor.refreshTokenSecret, authContext)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewBadRequestError("Invalid token.")
 	}
-	password, err := processor.sanitizePassword(request.Password)
-	if err != nil {
-		return nil, err
+	if authContext.ExpiresOn <= time.NowUnix() {
+		return nil, errors.NewBadRequestError("Expired token.")
 	}
-	user, err := processor.repository.GetByUsername(username)
+	user, err := processor.repository.GetByID(authContext.UserID)
 	if err != nil {
 		return nil, err
 	}
 	if user == nil {
-		return nil, errors.NewBadRequestError("Invalid credentials.")
-	}
-	passwordsMatch := crypto.VerifyPasswordHash(password, user.PasswordHash)
-	if !passwordsMatch {
-		return nil, errors.NewBadRequestError("Invalid credentials.")
+		return nil, errors.NewBadRequestError("User not found.")
 	}
 	response, err := loginspost.CreateResponse(user.ID, processor.accessTokenSecret, processor.refreshTokenSecret)
 	if err != nil {
@@ -58,24 +54,4 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	}
 	output := api.NewOutput(response)
 	return output, nil
-}
-
-func (processor *Processor) sanitizeUsername(value string) (string, error) {
-	rules := input.StringRules{
-		Required: true,
-	}
-	errorCreator := func(message string) error {
-		return errors.NewBadRequestError("Invalid email or username: " + message)
-	}
-	return input.SanitizeString(value, rules, errorCreator)
-}
-
-func (processor *Processor) sanitizePassword(value string) (string, error) {
-	rules := input.StringRules{
-		Required: true,
-	}
-	errorCreator := func(message string) error {
-		return errors.NewBadRequestError("Invalid password: " + message)
-	}
-	return input.SanitizeString(value, rules, errorCreator)
 }

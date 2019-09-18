@@ -20,6 +20,6 @@ func main() {
 	dynamoClient := dynamo.NewClient(session)
 	repository := battles.NewRepository(dynamoClient)
 	processor := NewProcessor(indexer, repository)
-	handler := api.NewHandler(true, os.Getenv("TOKEN_SECRET"), processor)
+	handler := api.NewHandler(true, os.Getenv("ACCESS_TOKEN_SECRET"), processor)
 	lambda.StartHandler(handler)
 }

@@ -3,7 +3,7 @@ package main_test
 import (
 	"testing"
 
-	. "github.com/bitterbattles/api/cmd/logins-post"
+	. "github.com/bitterbattles/api/cmd/refreshes-post"
 	"github.com/bitterbattles/api/pkg/errors"
 	"github.com/bitterbattles/api/pkg/http"
 	"github.com/bitterbattles/api/pkg/jwt"
@@ -14,30 +14,25 @@ import (
 	"github.com/bitterbattles/api/pkg/users/mocks"
 )
 
-func TestProcessorMissingUsername(t *testing.T) {
-	testProcessor(t, "", "P@ssw0rd", http.BadRequest)
+func TestProcessorBadToken(t *testing.T) {
+	testProcessor(t, "invalidToken", http.BadRequest)
 }
 
-func TestProcessorMissingPassword(t *testing.T) {
-	testProcessor(t, "UsErNaMe123", "", http.BadRequest)
+func TestProcessorMissingUser(t *testing.T) {
+	testProcessor(t, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJtaXNzaW5nVXNlcklkIiwiaWF0IjoxNTY4ODIyODUxLCJleHAiOjI4MzExMjY4NTF9.mQNO1MgG4Cjl1bJDsEeUt7HxICLJTMlP7jIcDfFCpos", http.BadRequest)
 }
 
-func TestProcessorUnknownUsername(t *testing.T) {
-	testProcessor(t, "unknown", "P@ssw0rd", http.BadRequest)
+func TestProcessorExpiredToken(t *testing.T) {
+	testProcessor(t, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VySWQiLCJpYXQiOjE1Njg4MjI4NTEsImV4cCI6MTU2ODgyMjg1MX0.DiA8v2pyB6G40F0d8mJ7nGpGkExy2tdLJd8imreodlo", http.BadRequest)
 }
 
-func TestProcessorBadPassword(t *testing.T) {
-	testProcessor(t, "UsErNaMe123", "incorrect", http.BadRequest)
+func TestProcessorSuccess(t *testing.T) {
+	testProcessor(t, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VySWQiLCJpYXQiOjE1Njg4MjI4NTEsImV4cCI6MjgzMTEyNjg1MX0.pCqOafVCwQ-9X3u7Lr30UL2fDrOxuPV5AiiA6L2uE5c", http.OK)
 }
 
-func TestProcessorSuccessCredentials(t *testing.T) {
-	testProcessor(t, "UsErNaMe123", "P@ssw0rd", http.OK)
-}
-
-func testProcessor(t *testing.T, username string, password string, expectedStatusCode int) {
+func testProcessor(t *testing.T, refreshToken string, expectedStatusCode int) {
 	requestBody := &Request{
-		Username: username,
-		Password: password,
+		RefreshToken: refreshToken,
 	}
 	input := &api.Input{
 		RequestBody: requestBody,
