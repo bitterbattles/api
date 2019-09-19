@@ -1,12 +1,9 @@
 package main
 
 import (
-	"log"
-
 	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/battlesget"
 	"github.com/bitterbattles/api/pkg/lambda/api"
-	"github.com/bitterbattles/api/pkg/users"
 	"github.com/bitterbattles/api/pkg/votes"
 )
 
@@ -14,7 +11,6 @@ import (
 type Processor struct {
 	indexer           *battles.Indexer
 	battlesRepository battles.RepositoryInterface
-	usersRepository   users.RepositoryInterface
 	votesRepository   votes.RepositoryInterface
 }
 
@@ -22,12 +18,10 @@ type Processor struct {
 func NewProcessor(
 	indexer *battles.Indexer,
 	battlesRepository battles.RepositoryInterface,
-	usersRepository users.RepositoryInterface,
 	votesRepository votes.RepositoryInterface) *Processor {
 	return &Processor{
 		indexer:           indexer,
 		battlesRepository: battlesRepository,
-		usersRepository:   usersRepository,
 		votesRepository:   votesRepository,
 	}
 }
@@ -50,28 +44,9 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	if input.AuthContext != nil {
 		userID = input.AuthContext.UserID
 	}
-	responses := make([]*battlesget.Response, 0, len(battleIDs))
-	for _, battleID := range battleIDs {
-		battle, err := processor.battlesRepository.GetByID(battleID)
-		if err != nil {
-			return nil, err
-		}
-		if battle == nil {
-			log.Println("Failed to find battle ID", battleID, "referenced in", sort, "index.")
-			continue
-		}
-		if battle.State == battles.Deleted {
-			continue
-		}
-		user, err := processor.usersRepository.GetByID(battle.UserID)
-		if err != nil {
-			return nil, err
-		}
-		canVote, err := processor.getCanVote(userID, battle)
-		if err != nil {
-			return nil, err
-		}
-		responses = append(responses, battlesget.ToResponse(battle, user, canVote))
+	responses, err := battlesget.CreateResponses(userID, battleIDs, processor.battlesRepository, processor.getCanVote)
+	if err != nil {
+		return nil, err
 	}
 	output := api.NewOutput(responses)
 	return output, nil

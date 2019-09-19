@@ -34,6 +34,11 @@ func NewBadRequestErrorWithCode(code int, message string) *HTTPError {
 	return newHTTPError(http.BadRequest, code, message)
 }
 
+// NewForbiddenError creates a new HTTPError instance representing a Forbidden error
+func NewForbiddenError(message string) *HTTPError {
+	return newHTTPError(http.Forbidden, http.Forbidden, message)
+}
+
 func newHTTPError(statusCode int, errorCode int, errorMessage string) *HTTPError {
 	return &HTTPError{
 		statusCode:   statusCode,

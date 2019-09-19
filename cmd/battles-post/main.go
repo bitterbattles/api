@@ -8,13 +8,15 @@ import (
 	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/dynamo"
 	"github.com/bitterbattles/api/pkg/lambda/api"
+	"github.com/bitterbattles/api/pkg/users"
 )
 
 func main() {
 	session := aws.NewSession(os.Getenv("AWS_REGION"))
 	dynamoClient := dynamo.NewClient(session)
-	repository := battles.NewRepository(dynamoClient)
-	processor := NewProcessor(repository)
+	battlesRepository := battles.NewRepository(dynamoClient)
+	usersRepository := users.NewRepository(dynamoClient)
+	processor := NewProcessor(battlesRepository, usersRepository)
 	handler := api.NewHandler(true, os.Getenv("ACCESS_TOKEN_SECRET"), processor)
 	lambda.StartHandler(handler)
 }

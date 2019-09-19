@@ -4,6 +4,7 @@ package battles
 type Battle struct {
 	ID           string `json:"id"`
 	UserID       string `json:"userId"`
+	Username     string `json:"username"`
 	Title        string `json:"title"`
 	Description  string `json:"description"`
 	VotesFor     int    `json:"votesFor"`

@@ -12,8 +12,6 @@ import (
 	indexMocks "github.com/bitterbattles/api/pkg/index/mocks"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	. "github.com/bitterbattles/api/pkg/tests"
-	"github.com/bitterbattles/api/pkg/users"
-	usersMocks "github.com/bitterbattles/api/pkg/users/mocks"
 )
 
 const testSort = "recent"
@@ -23,38 +21,38 @@ func TestProcessorBadIndexEntry(t *testing.T) {
 	indexRepository := indexMocks.NewRepository()
 	key := fmt.Sprintf("battleIds:forAuthor:%s:%s", userID, testSort)
 	indexRepository.SetScore(key, "badId", 0)
-	battlesRepository := battlesMocks.NewRepository()
-	addBattles(indexRepository, battlesRepository, userID, testSort, false, 1)
-	expectedResponse := `[{"id":"id0","username":"UserID0","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"createdOn":0}]`
+	repository := battlesMocks.NewRepository()
+	addBattles(indexRepository, repository, userID, testSort, false, 1)
+	expectedResponse := `[{"id":"id0","username":"username","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"createdOn":0}]`
 	authContext := &api.AuthContext{
 		UserID: userID,
 	}
-	testProcessor(t, indexRepository, battlesRepository, authContext, testSort, "1", "2", expectedResponse)
+	testProcessor(t, indexRepository, repository, authContext, testSort, "1", "2", expectedResponse)
 }
 
 func TestProcessorDeletedIndexEntry(t *testing.T) {
 	indexRepository := indexMocks.NewRepository()
-	battlesRepository := battlesMocks.NewRepository()
-	addBattles(indexRepository, battlesRepository, "userId0", testSort, true, 1)
+	repository := battlesMocks.NewRepository()
+	addBattles(indexRepository, repository, "userId0", testSort, true, 1)
 	expectedResponse := `[]`
 	authContext := &api.AuthContext{
 		UserID: "userId0",
 	}
-	testProcessor(t, indexRepository, battlesRepository, authContext, testSort, "1", "2", expectedResponse)
+	testProcessor(t, indexRepository, repository, authContext, testSort, "1", "2", expectedResponse)
 }
 
 func TestProcessor(t *testing.T) {
 	indexRepository := indexMocks.NewRepository()
-	battlesRepository := battlesMocks.NewRepository()
-	addBattles(indexRepository, battlesRepository, "userId0", testSort, false, 3)
-	expectedResponse := `[{"id":"id0","username":"UserID0","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"createdOn":0},{"id":"id1","username":"UserID0","title":"title1","description":"description1","canVote":false,"votesFor":1,"votesAgainst":2,"createdOn":3}]`
+	repository := battlesMocks.NewRepository()
+	addBattles(indexRepository, repository, "userId0", testSort, false, 3)
+	expectedResponse := `[{"id":"id0","username":"username","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"createdOn":0},{"id":"id1","username":"username","title":"title1","description":"description1","canVote":false,"votesFor":1,"votesAgainst":2,"createdOn":3}]`
 	authContext := &api.AuthContext{
 		UserID: "userId0",
 	}
-	testProcessor(t, indexRepository, battlesRepository, authContext, testSort, "1", "2", expectedResponse)
+	testProcessor(t, indexRepository, repository, authContext, testSort, "1", "2", expectedResponse)
 }
 
-func addBattles(indexRepository *indexMocks.Repository, battlesRepository *battlesMocks.Repository, userID string, sort string, isDeleted bool, count int) {
+func addBattles(indexRepository *indexMocks.Repository, repository *battlesMocks.Repository, userID string, sort string, isDeleted bool, count int) {
 	key := fmt.Sprintf("battleIds:forAuthor:%s:%s", userID, sort)
 	state := battles.Active
 	if isDeleted {
@@ -64,6 +62,7 @@ func addBattles(indexRepository *indexMocks.Repository, battlesRepository *battl
 		battle := battles.Battle{
 			ID:           fmt.Sprintf("id%d", i),
 			UserID:       userID,
+			Username:     "username",
 			Title:        fmt.Sprintf("title%d", i),
 			Description:  fmt.Sprintf("description%d", i),
 			VotesFor:     i,
@@ -71,18 +70,12 @@ func addBattles(indexRepository *indexMocks.Repository, battlesRepository *battl
 			CreatedOn:    int64(i * 3),
 			State:        state,
 		}
-		battlesRepository.Add(&battle)
+		repository.Add(&battle)
 		indexRepository.SetScore(key, battle.ID, float64(i))
 	}
 }
 
-func testProcessor(t *testing.T, indexRepository *indexMocks.Repository, battlesRepository *battlesMocks.Repository, authContext *api.AuthContext, testSort string, page string, pageSize string, expectedResponseBody string) {
-	usersRepository := usersMocks.NewRepository()
-	usersRepository.Add(&users.User{
-		ID:              "userId0",
-		DisplayUsername: "UserID0",
-		State:           users.Active,
-	})
+func testProcessor(t *testing.T, indexRepository *indexMocks.Repository, repository *battlesMocks.Repository, authContext *api.AuthContext, testSort string, page string, pageSize string, expectedResponseBody string) {
 	queryParams := make(map[string]string)
 	if testSort != "" {
 		queryParams["sort"] = testSort
@@ -98,7 +91,7 @@ func testProcessor(t *testing.T, indexRepository *indexMocks.Repository, battles
 		QueryParams: queryParams,
 	}
 	indexer := battles.NewIndexer(indexRepository)
-	processor := NewProcessor(indexer, battlesRepository, usersRepository)
+	processor := NewProcessor(indexer, repository)
 	output, err := processor.Process(input)
 	AssertNil(t, err)
 	AssertNotNil(t, output)

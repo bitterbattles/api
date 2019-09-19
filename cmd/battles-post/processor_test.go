@@ -5,36 +5,50 @@ import (
 
 	. "github.com/bitterbattles/api/cmd/battles-post"
 	"github.com/bitterbattles/api/pkg/battles"
-	"github.com/bitterbattles/api/pkg/battles/mocks"
+	battlesMocks "github.com/bitterbattles/api/pkg/battles/mocks"
 	"github.com/bitterbattles/api/pkg/errors"
 	"github.com/bitterbattles/api/pkg/http"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	. "github.com/bitterbattles/api/pkg/tests"
+	"github.com/bitterbattles/api/pkg/users"
+	usersMocks "github.com/bitterbattles/api/pkg/users/mocks"
 )
 
 func TestProcessorTooShortTitle(t *testing.T) {
-	testProcessor(t, "", "description", http.BadRequest)
+	testProcessor(t, "", "description", false, http.BadRequest)
 }
 
 func TestProcessorTooLongTitle(t *testing.T) {
 	title := "loooooooooooooooooooooooooooooooooooooooooooooooooongtitle"
-	testProcessor(t, title, "description", http.BadRequest)
+	testProcessor(t, title, "description", false, http.BadRequest)
 }
 
 func TestProcessorTooShortDescription(t *testing.T) {
-	testProcessor(t, "title", "", http.BadRequest)
+	testProcessor(t, "title", "", false, http.BadRequest)
 }
 
 func TestProcessorTooLongDescription(t *testing.T) {
 	description := "loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongdescription"
-	testProcessor(t, "title", description, http.BadRequest)
+	testProcessor(t, "title", description, false, http.BadRequest)
+}
+
+func TestProcessorMissingUser(t *testing.T) {
+	testProcessor(t, "title", "description", true, http.Forbidden)
 }
 
 func TestProcessorSuccess(t *testing.T) {
-	testProcessor(t, "title", "description", http.Created)
+	testProcessor(t, "title", "description", false, http.Created)
 }
 
-func testProcessor(t *testing.T, title string, description string, expectedStatusCode int) {
+func testProcessor(t *testing.T, title string, description string, missingUser bool, expectedStatusCode int) {
+	user := &users.User{
+		ID:       "userId",
+		Username: "username",
+	}
+	usersRepository := usersMocks.NewRepository()
+	if !missingUser {
+		usersRepository.Add(user)
+	}
 	authContext := &api.AuthContext{
 		UserID: "userId",
 	}
@@ -46,16 +60,17 @@ func testProcessor(t *testing.T, title string, description string, expectedStatu
 		AuthContext: authContext,
 		RequestBody: requestBody,
 	}
-	repository := mocks.NewRepository()
-	processor := NewProcessor(repository)
+	battlesRepository := battlesMocks.NewRepository()
+	processor := NewProcessor(battlesRepository, usersRepository)
 	output, err := processor.Process(input)
-	battle := repository.GetLastAdded()
+	battle := battlesRepository.GetLastAdded()
 	if expectedStatusCode == http.Created {
 		AssertNotNil(t, output)
 		AssertNil(t, err)
 		AssertEquals(t, output.StatusCode, expectedStatusCode)
 		AssertNotNil(t, battle)
-		AssertEquals(t, battle.UserID, authContext.UserID)
+		AssertEquals(t, battle.UserID, user.ID)
+		AssertEquals(t, battle.Username, user.Username)
 		AssertEquals(t, battle.Title, title)
 		AssertEquals(t, battle.Description, description)
 		AssertEquals(t, battle.State, battles.Active)

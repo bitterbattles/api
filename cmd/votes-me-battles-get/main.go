@@ -3,8 +3,6 @@ package main
 import (
 	"os"
 
-	"github.com/bitterbattles/api/pkg/users"
-
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/bitterbattles/api/pkg/aws"
 	"github.com/bitterbattles/api/pkg/battles"
@@ -21,8 +19,7 @@ func main() {
 	session := aws.NewSession(os.Getenv("AWS_REGION"))
 	dynamoClient := dynamo.NewClient(session)
 	battlesRepository := battles.NewRepository(dynamoClient)
-	usersRepository := users.NewRepository(dynamoClient)
-	processor := NewProcessor(indexer, battlesRepository, usersRepository)
+	processor := NewProcessor(indexer, battlesRepository)
 	handler := api.NewHandler(true, os.Getenv("ACCESS_TOKEN_SECRET"), processor)
 	lambda.StartHandler(handler)
 }

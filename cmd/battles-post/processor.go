@@ -8,6 +8,7 @@ import (
 	"github.com/bitterbattles/api/pkg/input"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	"github.com/bitterbattles/api/pkg/time"
+	"github.com/bitterbattles/api/pkg/users"
 )
 
 const (
@@ -19,13 +20,15 @@ const (
 
 // Processor represents a request processor
 type Processor struct {
-	repository battles.RepositoryInterface
+	battlesRepository battles.RepositoryInterface
+	usersRepository   users.RepositoryInterface
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(repository battles.RepositoryInterface) *Processor {
+func NewProcessor(battlesRepository battles.RepositoryInterface, usersRepository users.RepositoryInterface) *Processor {
 	return &Processor{
-		repository: repository,
+		battlesRepository: battlesRepository,
+		usersRepository:   usersRepository,
 	}
 }
 
@@ -45,15 +48,24 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	if err != nil {
 		return nil, err
 	}
+	userID := input.AuthContext.UserID
+	user, err := processor.usersRepository.GetByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.NewForbiddenError("User not found.")
+	}
 	battle := battles.Battle{
 		ID:          guid.New(),
-		UserID:      input.AuthContext.UserID,
+		UserID:      userID,
+		Username:    user.Username,
 		Title:       title,
 		Description: description,
 		CreatedOn:   time.NowUnix(),
 		State:       battles.Active,
 	}
-	err = processor.repository.Add(&battle)
+	err = processor.battlesRepository.Add(&battle)
 	if err != nil {
 		return nil, err
 	}

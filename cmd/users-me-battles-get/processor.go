@@ -1,27 +1,22 @@
 package main
 
 import (
-	"log"
-
 	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/battlesget"
 	"github.com/bitterbattles/api/pkg/lambda/api"
-	"github.com/bitterbattles/api/pkg/users"
 )
 
 // Processor represents a request processor
 type Processor struct {
-	indexer           *battles.Indexer
-	battlesRepository battles.RepositoryInterface
-	usersRepository   users.RepositoryInterface
+	indexer    *battles.Indexer
+	repository battles.RepositoryInterface
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(indexer *battles.Indexer, battlesRepository battles.RepositoryInterface, usersRepository users.RepositoryInterface) *Processor {
+func NewProcessor(indexer *battles.Indexer, repository battles.RepositoryInterface) *Processor {
 	return &Processor{
-		indexer:           indexer,
-		battlesRepository: battlesRepository,
-		usersRepository:   usersRepository,
+		indexer:    indexer,
+		repository: repository,
 	}
 }
 
@@ -36,29 +31,18 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	page := battlesget.GetPage(input)
 	pageSize := battlesget.GetPageSize(input)
 	userID := input.AuthContext.UserID
-	user, err := processor.usersRepository.GetByID(userID)
-	if err != nil {
-		return nil, err
-	}
 	battleIDs, err := processor.indexer.GetByAuthor(userID, sort, page, pageSize)
 	if err != nil {
 		return nil, err
 	}
-	responses := make([]*battlesget.Response, 0, len(battleIDs))
-	for _, battleID := range battleIDs {
-		battle, err := processor.battlesRepository.GetByID(battleID)
-		if err != nil {
-			return nil, err
-		}
-		if battle == nil {
-			log.Println("Failed to find battle ID", battleID, "referenced in author", userID, "+", sort, "index.")
-			continue
-		}
-		if battle.State == battles.Deleted {
-			continue
-		}
-		responses = append(responses, battlesget.ToResponse(battle, user, false))
+	responses, err := battlesget.CreateResponses(userID, battleIDs, processor.repository, processor.getCanVote)
+	if err != nil {
+		return nil, err
 	}
 	output := api.NewOutput(responses)
 	return output, nil
+}
+
+func (processor *Processor) getCanVote(userID string, battle *battles.Battle) (bool, error) {
+	return false, nil
 }
