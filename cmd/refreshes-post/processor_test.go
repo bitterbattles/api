@@ -67,7 +67,7 @@ func testProcessor(t *testing.T, refreshToken string, expectedStatusCode int) {
 		err = jwt.DecodeHS256(refreshToken, refreshTokenSecret, refreshAuthContext)
 		AssertNil(t, err)
 		AssertEquals(t, refreshAuthContext.UserID, user.ID)
-		AssertEquals(t, response.RefreshExpiresIn, 4838400)
+		AssertEquals(t, response.RefreshExpiresIn, 15768000)
 	} else {
 		AssertNil(t, output)
 		AssertNotNil(t, err)
