@@ -6,8 +6,8 @@ import (
 	"github.com/bitterbattles/api/pkg/time"
 )
 
-const accessExpiresIn = 3600     // 1 hour
-const refreshExpiresIn = 4838400 // 8 weeks
+const accessExpiresIn = 3600      // 1 hour
+const refreshExpiresIn = 15768000 // 6 months
 
 // CreateResponse creates a login response
 func CreateResponse(userID string, accessTokenSecret string, refreshTokenSecret string) (*Response, error) {
