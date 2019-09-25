@@ -51,9 +51,7 @@ func (processor *Processor) captureChange(record *stream.EventRecord, changes ma
 	c, ok := changes[battleID]
 	if !ok {
 		c = &change{}
-		c.userIDs = make([]string, 0)
 	}
-	c.userIDs = append(c.userIDs, vote.UserID)
 	if vote.IsVoteFor {
 		c.deltaVotesFor++
 	} else {
@@ -67,11 +65,5 @@ func (processor *Processor) processChange(battleID string, change *change) {
 	err = processor.repository.IncrementVotes(battleID, change.deltaVotesFor, change.deltaVotesAgainst)
 	if err != nil {
 		log.Println("Failed to increment votes. Error:", err)
-	}
-	for _, userID := range change.userIDs {
-		err = processor.indexer.AddVoter(userID, battleID)
-		if err != nil {
-			log.Println("Failed to index battle vote. Error:", err)
-		}
 	}
 }

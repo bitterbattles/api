@@ -255,6 +255,50 @@ Resources:
           REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+  BattlesMeGetLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: battles-me-get
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: battles-me-get.zip
+      Runtime: go1.x
+      Handler: battles-me-get
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
+          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+  BattlesMeIdDeleteLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: battles-me-id-delete
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: battles-me-id-delete.zip
+      Runtime: go1.x
+      Handler: battles-me-id-delete
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
+          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   BattlesIdDeleteLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -395,50 +439,6 @@ Resources:
           REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
-  UsersMeBattlesGetLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: users-me-battles-get
-      Code:
-        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
-        S3Key: users-me-battles-get.zip
-      Runtime: go1.x
-      Handler: users-me-battles-get
-      Role: !GetAtt LambdaRole.Arn
-      VpcConfig:
-        SubnetIds:
-          - !Ref Subnet0
-          - !Ref Subnet1
-          - !Ref Subnet2
-        SecurityGroupIds:
-          - !GetAtt VPC.DefaultSecurityGroup
-      Environment:
-        Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
-          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
-          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
-  UsersMeBattlesIdDeleteLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: users-me-battles-id-delete
-      Code:
-        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
-        S3Key: users-me-battles-id-delete.zip
-      Runtime: go1.x
-      Handler: users-me-battles-id-delete
-      Role: !GetAtt LambdaRole.Arn
-      VpcConfig:
-        SubnetIds:
-          - !Ref Subnet0
-          - !Ref Subnet1
-          - !Ref Subnet2
-        SecurityGroupIds:
-          - !GetAtt VPC.DefaultSecurityGroup
-      Environment:
-        Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
-          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
-          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   VotesPostLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -456,28 +456,6 @@ Resources:
           - !Ref Subnet2
         SecurityGroupIds:
           - !GetAtt VPC.DefaultSecurityGroup
-      Environment:
-        Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
-          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
-          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
-  VotesMeBattlesGetLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: votes-me-battles-get
-      Code:
-        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
-        S3Key: votes-me-battles-get.zip
-      Runtime: go1.x
-      Handler: votes-me-battles-get
-      Role: !GetAtt LambdaRole.Arn
-      VpcConfig:
-        SubnetIds:
-          - !Ref Subnet0
-          - !Ref Subnet1
-          - !Ref Subnet2
-        SecurityGroupIds:
-          - !GetAtt VPC.DefaultSecurityGroup  
       Environment:
         Variables:
           REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
@@ -564,6 +542,56 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/battles", API: !Ref API]
+  BattlesMeResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !Ref BattlesResource
+      PathPart: "me"
+  BattlesMeGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref BattlesMeResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt BattlesMeGetLambda.Arn]
+        PassthroughBehavior: NEVER
+  BattlesMeGetPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt BattlesMeGetLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/GET/battles/me", API: !Ref API]
+  BattlesMeIdResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !Ref BattlesMeResource
+      PathPart: "{id}"
+  BattlesMeIdDeleteMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref BattlesMeIdResource
+      HttpMethod: DELETE
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt BattlesMeIdDeleteLambda.Arn]
+        PassthroughBehavior: NEVER
+  BattlesMeIdDeletePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt BattlesMeIdDeleteLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/DELETE/battles/me/*", API: !Ref API]
   BattlesIdResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -689,56 +717,6 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/DELETE/users/me", API: !Ref API]
-  UsersMeBattlesResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      RestApiId: !Ref API
-      ParentId: !Ref UsersMeResource
-      PathPart: "battles"
-  UsersMeBattlesGetMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      RestApiId: !Ref API
-      ResourceId: !Ref UsersMeBattlesResource
-      HttpMethod: GET
-      AuthorizationType: NONE
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt UsersMeBattlesGetLambda.Arn]
-        PassthroughBehavior: NEVER
-  UsersMeBattlesGetPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !GetAtt UsersMeBattlesGetLambda.Arn
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/GET/users/me/battles", API: !Ref API]
-  UsersMeBattlesIdResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      RestApiId: !Ref API
-      ParentId: !Ref UsersMeBattlesResource
-      PathPart: "{id}"
-  UsersMeBattlesIdDeleteMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      RestApiId: !Ref API
-      ResourceId: !Ref UsersMeBattlesIdResource
-      HttpMethod: DELETE
-      AuthorizationType: NONE
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt UsersMeBattlesIdDeleteLambda.Arn]
-        PassthroughBehavior: NEVER
-  UsersMeBattlesIdDeletePermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !GetAtt UsersMeBattlesIdDeleteLambda.Arn
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/DELETE/users/me/battles/*", API: !Ref API]
   VotesResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -764,37 +742,6 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/votes", API: !Ref API]
-  VotesMeResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      RestApiId: !Ref API
-      ParentId: !Ref VotesResource
-      PathPart: "me"
-  VotesMeBattlesResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      RestApiId: !Ref API
-      ParentId: !Ref VotesMeResource
-      PathPart: "battles"
-  VotesMeBattlesGetMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      RestApiId: !Ref API
-      ResourceId: !Ref VotesMeBattlesResource
-      HttpMethod: GET
-      AuthorizationType: NONE
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt VotesMeBattlesGetLambda.Arn]
-        PassthroughBehavior: NEVER
-  VotesMeBattlesGetPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !GetAtt VotesMeBattlesGetLambda.Arn
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/GET/votes/me/battles", API: !Ref API]
   Certificate:
     Type: AWS::CertificateManager::Certificate
     Properties:

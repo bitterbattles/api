@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	. "github.com/bitterbattles/api/cmd/users-me-battles-id-delete"
+	. "github.com/bitterbattles/api/cmd/battles-me-id-delete"
 	"github.com/bitterbattles/api/pkg/battles"
 	battlesMocks "github.com/bitterbattles/api/pkg/battles/mocks"
 	"github.com/bitterbattles/api/pkg/http"

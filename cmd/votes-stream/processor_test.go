@@ -11,10 +11,7 @@ import (
 	indexMocks "github.com/bitterbattles/api/pkg/index/mocks"
 	"github.com/bitterbattles/api/pkg/lambda/stream"
 	. "github.com/bitterbattles/api/pkg/tests"
-	"github.com/bitterbattles/api/pkg/time"
 )
-
-const voterKeyPattern = "battleIds:forVoter:%s"
 
 func TestProcessor(t *testing.T) {
 	indexRepository := indexMocks.NewRepository()
@@ -28,11 +25,6 @@ func TestProcessor(t *testing.T) {
 	AssertNil(t, err)
 	verifyBattleVotes(t, battlesRepository, "id0", 2, 1)
 	verifyBattleVotes(t, battlesRepository, "id1", 1, 0)
-	expectedScore := float64(time.NowUnix())
-	verifyIndex(t, indexRepository, "userId0", "id0", expectedScore)
-	verifyIndex(t, indexRepository, "userId0", "id1", expectedScore)
-	verifyIndex(t, indexRepository, "userId1", "id0", expectedScore)
-	verifyIndex(t, indexRepository, "userId2", "id0", expectedScore)
 }
 
 func addBattles(repository *battlesMocks.Repository, count int) {
@@ -58,9 +50,4 @@ func verifyBattleVotes(t *testing.T, repository *battlesMocks.Repository, id str
 	AssertNotNil(t, battle)
 	AssertEquals(t, battle.VotesFor, expectedVotesFor)
 	AssertEquals(t, battle.VotesAgainst, expectedVotesAgainst)
-}
-
-func verifyIndex(t *testing.T, repository *indexMocks.Repository, userID string, battleID string, expectedScore float64) {
-	score := repository.GetScore(fmt.Sprintf(voterKeyPattern, userID), battleID)
-	AssertEquals(t, score, expectedScore)
 }

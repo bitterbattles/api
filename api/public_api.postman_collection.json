@@ -10,15 +10,25 @@
 			"item": [
 				{
 					"name": "List all battles",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "bc26b4c9-1558-417b-8fc3-7716ee4c64da",
+								"exec": [
+									"var accessToken = pm.globals.get(\"accessToken\");",
+									"if (accessToken) {",
+									"    var Header = require('postman-collection').Header;",
+									"    pm.request.headers.add(new Header(\"Authorization: Bearer \" + accessToken));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{accessToken}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{apiRoot}}/battles?sort=recent&page=1&pageSize=10",
 							"host": [
@@ -132,50 +142,14 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{apiRoot}}/users/me/battles/bi0rt02ft3os72gmcdh0",
+							"raw": "{{apiRoot}}/battles/me/bi0rt02ft3os72gmcdh0",
 							"host": [
 								"{{apiRoot}}"
 							],
 							"path": [
-								"users",
-								"me",
 								"battles",
-								"bi0rt02ft3os72gmcdh0"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "List battles I've voted on",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"type": "text",
-								"value": "Bearer {{accessToken}}"
-							}
-						],
-						"url": {
-							"raw": "{{apiRoot}}/votes/me/battles?page=1&pageSize=10",
-							"host": [
-								"{{apiRoot}}"
-							],
-							"path": [
-								"votes",
 								"me",
-								"battles"
-							],
-							"query": [
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "pageSize",
-									"value": "10"
-								}
+								"bi0rt02ft3os72gmcdh0"
 							]
 						}
 					},
@@ -330,7 +304,7 @@
 			"name": "votes",
 			"item": [
 				{
-					"name": "Record a vote",
+					"name": "Vote",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -341,20 +315,28 @@
 							},
 							{
 								"key": "Content-Type",
+								"name": "Content-Type",
 								"value": "application/json",
 								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"battleId\": \"bi0slk0m4dic72afobd0\",\n\t\"isVoteFor\": true\n}"
+							"raw": "{\n\t\"isVoteFor\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
-							"raw": "{{apiRoot}}/votes",
+							"raw": "{{apiRoot}}/battles/bi0rt02ft3os72gmcdh0/votes",
 							"host": [
 								"{{apiRoot}}"
 							],
 							"path": [
+								"battles",
+								"bi0rt02ft3os72gmcdh0",
 								"votes"
 							]
 						}

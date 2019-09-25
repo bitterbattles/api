@@ -1,0 +1,145 @@
+swagger: "2.0"
+info:
+  description: The Bitter Battles Moderator API.
+  version: "1.0"
+  title: Bitter Battles Moderator
+host: api.bitterbattles.com
+basePath: /v1
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /flags/battles:
+    get:
+      tags:
+        - battles
+      summary: "[NOT SUPPORTED YET] List flagged battles"
+      description: Gets a list of flagged battles.
+      parameters:
+        - $ref: "#/parameters/page"
+        - $ref: "#/parameters/pageSize"
+      responses:
+        200:
+          description: Success.
+          schema:
+            $ref: "#/definitions/battleList"
+  /flags/battles/{id}:
+    delete:
+      tags:
+        - battles
+      summary: "[NOT SUPPORTED YET] Delete a flagged battle"
+      description: Deletes a flagged battle by ID.
+      parameters:
+        - $ref: "#/parameters/battleId"
+      responses:
+        204:
+          description: Success.
+        404:
+          description: The specified battle ID could not be found or is not flagged.
+          schema:
+            $ref: "#/definitions/errorResponse"
+  /flags/comments:
+    get:
+      tags:
+        - comments
+      summary: "[NOT SUPPORTED YET] List flagged comments"
+      description: Gets a list of flagged comments.
+      parameters:
+        - $ref: "#/parameters/page"
+        - $ref: "#/parameters/pageSize"
+      responses:
+        200:
+          description: Success.
+          schema:
+            $ref: "#/definitions/commentList"
+  /flags/comments/{id}:
+    delete:
+      tags:
+        - comments
+      summary: "[NOT SUPPORTED YET] Delete a flagged comment"
+      description: Deletes a flagged comment by ID.
+      parameters:
+        - $ref: "#/parameters/commentId"
+      responses:
+        204:
+          description: Success.
+        404:
+          description: The specified comment ID could not be found or is not flagged.
+          schema:
+            $ref: "#/definitions/errorResponse"
+parameters:
+  page:
+    in: query
+    name: page
+    description: The pagination page number.
+    required: false
+    type: integer
+    default: 1
+  pageSize:
+    in: query
+    name: pageSize
+    description: The pagination page size.
+    required: false
+    type: integer
+    default: 50
+  battleId:
+    in: path
+    name: id
+    description: The ID of the battle.
+    required: true
+    type: string
+  commentId:
+    in: path
+    name: id
+    description: The ID of the comment.
+    required: true
+    type: string
+definitions:
+  errorResponse:
+    type: object
+    properties:
+      errorCode:
+        type: integer
+      errorMessage:
+        type: string
+  battleList:
+    type: array
+    items:
+      type: object
+      properties:
+        id:
+          type: string
+        createdOn:
+          type: integer
+          format: Epoch time (in seconds)
+        username:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        canVote:
+          type: boolean
+        votesFor:
+          type: integer
+        votesAgainst:
+          type: integer
+        verdict:
+          type: integer
+  commentList:
+    type: array
+    items:
+      type: object
+      properties:
+        id:
+          type: string
+        createdOn:
+          type: integer
+          format: Epoch time (in seconds)
+        username:
+          type: string
+        comment:
+          type: string

@@ -2,8 +2,10 @@ package battlesget
 
 import (
 	"log"
+	"math"
 
 	"github.com/bitterbattles/api/pkg/battles"
+	"github.com/bitterbattles/api/pkg/time"
 )
 
 // CreateResponses creates a list of GET battles responses
@@ -27,15 +29,32 @@ func CreateResponses(userID string, battleIDs []string, repository battles.Repos
 		}
 		response := &Response{
 			ID:           battle.ID,
+			CreatedOn:    battle.CreatedOn,
 			Username:     battle.Username,
 			Title:        battle.Title,
 			Description:  battle.Description,
 			CanVote:      canVote,
 			VotesFor:     battle.VotesFor,
 			VotesAgainst: battle.VotesAgainst,
-			CreatedOn:    battle.CreatedOn,
+			Verdict:      determineVerdict(battle.CreatedOn, float64(battle.VotesFor), float64(battle.VotesAgainst)),
 		}
 		responses = append(responses, response)
 	}
 	return responses, nil
+}
+
+func determineVerdict(createdOn int64, votesFor float64, votesAgainst float64) int {
+	daysOld := (time.NowUnix() - createdOn) / 86400
+	if daysOld < 1 {
+		return None
+	}
+	totalVotes := votesFor + votesAgainst
+	deltaVotes := math.Abs(votesFor - votesAgainst)
+	if totalVotes == 0 || deltaVotes/totalVotes <= 0.05 {
+		return NoDecision
+	}
+	if votesAgainst > votesFor {
+		return Against
+	}
+	return For
 }

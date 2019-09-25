@@ -46,6 +46,138 @@ paths:
           description: One or more of the request parameters is invalid.
           schema:
             $ref: "#/definitions/errorResponse"
+  /battles/{id}:
+    get:
+      tags:
+        - battles
+      summary: "[NOT SUPPORTED YET] Get a battle by ID"
+      description: Gets a single battle by ID.
+      parameters:
+        - $ref: "#/parameters/battleId"
+      responses:
+        200:
+          description: Success.
+          schema:
+            $ref: "#/definitions/battle"
+        404:
+          description: The specified battle ID could not be found.
+          schema:
+            $ref: "#/definitions/errorResponse"
+  /battles/me:
+    get:
+      tags:
+        - battles
+      summary: List my battles
+      description: Gets a list of battles created by me.
+      parameters:
+        - $ref: "#/parameters/sort"
+        - $ref: "#/parameters/page"
+        - $ref: "#/parameters/pageSize"
+      responses:
+        200:
+          description: Success.
+          schema:
+            $ref: "#/definitions/battleList"
+  /battles/me/{id}:
+    delete:
+      tags:
+        - battles
+      summary: Delete one of my battles
+      description: Deletes one of my battles by ID.
+      parameters:
+        - $ref: "#/parameters/battleId"
+      responses:
+        204:
+          description: Success.
+        404:
+          description: The specified battle ID could not be found or was not authored by you.
+          schema:
+            $ref: "#/definitions/errorResponse"
+  /battles/{id}/votes:
+    post:
+      tags:
+        - votes
+      summary: Vote
+      description: Creates a new vote.
+      parameters:
+        - $ref: "#/parameters/battleId"
+        - in: body
+          name: body
+          description: The new vote to record.
+          required: true
+          schema:
+            $ref: "#/definitions/newVote"
+      responses:
+        201:
+          description: Success.
+        400:
+          description: One or more of the request body parameters is invalid.
+          schema:
+            $ref: "#/definitions/errorResponse"
+  /battles/{id}/comments:
+    get:
+      tags:
+        - comments
+      summary: "[NOT SUPPORTED YET] List battle comments"
+      description: Lists comments for the battle.
+      parameters:
+        - $ref: "#/parameters/battleId"
+        - $ref: "#/parameters/page"
+        - $ref: "#/parameters/pageSize"
+      responses:
+        200:
+          description: Success.
+          schema:
+            $ref: "#/definitions/commentList"
+    post:
+      tags:
+        - comments
+      summary: "[NOT SUPPORTED YET] Create a comment"
+      description: Creates a battle comment.
+      parameters:
+        - $ref: "#/parameters/battleId"
+        - in: body
+          name: body
+          description: The new comment to create.
+          required: true
+          schema:
+            $ref: "#/definitions/newComment"
+      responses:
+        201:
+          description: Success.
+        400:
+          description: One or more of the request body parameters is invalid.
+          schema:
+            $ref: "#/definitions/errorResponse"
+  /comments/me:
+    get:
+      tags:
+        - comments
+      summary: "[NOT SUPPORTED YET] List my comments"
+      description: Gets a list of comments created by me.
+      parameters:
+        - $ref: "#/parameters/page"
+        - $ref: "#/parameters/pageSize"
+      responses:
+        200:
+          description: Success.
+          schema:
+            $ref: "#/definitions/commentList"
+  /comments/me/{id}:
+    delete:
+      tags:
+        - comments
+      summary: "[NOT SUPPORTED YET] Delete one of my comments"
+      description: Deletes one of my comments by ID.
+      parameters:
+        - $ref: "#/parameters/commentId"
+      responses:
+        204:
+          description: Success.
+        404:
+          description: The specified comment ID could not be found or was not authored by you.
+          schema:
+            $ref: "#/definitions/errorResponse"
   /logins:
     post:
       tags:
@@ -142,83 +274,14 @@ paths:
       responses:
         204:
           description: Success.
-  /users/me/battles:
-    get:
-      tags:
-        - battles
-      summary: List my battles
-      description: Gets a list of battles created by me.
-      parameters:
-        - $ref: "#/parameters/sort"
-        - $ref: "#/parameters/page"
-        - $ref: "#/parameters/pageSize"
-      responses:
-        200:
-          description: Success.
-          schema:
-            $ref: "#/definitions/battleList"
-  /users/me/battles/{id}:
-    delete:
-      tags:
-        - battles
-      summary: Delete one of my battles
-      description: Deletes one of my battles by ID.
-      parameters:
-        - $ref: "#/parameters/battleId"
-      responses:
-        204:
-          description: Success.
-        404:
-          description: The specified battle ID could not be found or was not authored by you.
-          schema:
-            $ref: "#/definitions/errorResponse"
-  /votes:
-    post:
-      tags:
-        - votes
-      summary: Record a vote
-      description: Creates a new vote.
-      parameters:
-        - in: body
-          name: body
-          description: The new vote to record.
-          required: true
-          schema:
-            $ref: "#/definitions/newVote"
-      responses:
-        201:
-          description: Success.
-        400:
-          description: One or more of the request body parameters is invalid.
-          schema:
-            $ref: "#/definitions/errorResponse"
-  /votes/me/battles:
-    get:
-      tags:
-        - battles
-      summary: List battles I've voted on
-      description: Gets a list of battles that the I have voted on.
-      parameters:
-        - $ref: "#/parameters/page"
-        - $ref: "#/parameters/pageSize"
-      responses:
-        200:
-          description: Success.
-          schema:
-            $ref: "#/definitions/battleList"
-  /flags:
+  /battles/{id}/flags:
     post:
       tags:
         - flags
-      summary: "[NOT SUPPORTED YET] Record a flag"
-      description: Creates a new flag.
+      summary: "[NOT SUPPORTED YET] Flag a battle"
+      description: Creates a new flag on a battle.
       parameters:
-        - in: body
-          name: body
-          description: The new flag to record.
-          required: true
-          schema:
-            $ref: "#/definitions/newFlag"
+        - $ref: "#/parameters/battleId"
       responses:
         201:
           description: Success.
@@ -226,33 +289,19 @@ paths:
           description: One or more of the request body parameters is invalid.
           schema:
             $ref: "#/definitions/errorResponse"
-  /flags/battles:
-    get:
+  /comments/{id}/flags:
+    post:
       tags:
-        - battles
-      summary: "[NOT SUPPORTED YET] List flagged battles"
-      description: Gets a list of flagged battles.
+        - flags
+      summary: "[NOT SUPPORTED YET] Flag a comment"
+      description: Creates a new flag on a comment.
       parameters:
-        - $ref: "#/parameters/page"
-        - $ref: "#/parameters/pageSize"
+        - $ref: "#/parameters/commentId"
       responses:
-        200:
+        201:
           description: Success.
-          schema:
-            $ref: "#/definitions/battleList"
-  /flags/battles/{id}:
-    delete:
-      tags:
-        - battles
-      summary: "[NOT SUPPORTED YET] Delete a flagged battle"
-      description: Deletes a flagged battle by ID.
-      parameters:
-        - $ref: "#/parameters/battleId"
-      responses:
-        204:
-          description: Success.
-        404:
-          description: The specified battle ID could not be found or is not flagged.
+        400:
+          description: One or more of the request body parameters is invalid.
           schema:
             $ref: "#/definitions/errorResponse"
 parameters:
@@ -287,6 +336,12 @@ parameters:
     description: The ID of the battle.
     required: true
     type: string
+  commentId:
+    in: path
+    name: id
+    description: The ID of the comment.
+    required: true
+    type: string
 definitions:
   errorResponse:
     type: object
@@ -295,6 +350,32 @@ definitions:
         type: integer
       errorMessage:
         type: string
+  battleList:
+    type: array
+    items:
+      $ref: "#/definitions/battle"
+  battle:
+    type: object
+    properties:
+      id:
+        type: string
+      createdOn:
+        type: integer
+        format: Epoch time (in seconds)
+      username:
+        type: string
+      title:
+        type: string
+      description:
+        type: string
+      canVote:
+        type: boolean
+      votesFor:
+        type: integer
+      votesAgainst:
+        type: integer
+      verdict:
+        type: integer
   newBattle:
     type: object
     properties:
@@ -305,30 +386,37 @@ definitions:
     required:
       - title
       - description
-  battleList:
+  newVote:
+    type: object
+    properties:
+      isVoteFor:
+        type: boolean
+    required:
+      - battleId
+      - isVoteFor
+  commentList:
     type: array
     items:
       type: object
       properties:
         id:
           type: string
-        username:
+        battleId:
           type: string
-        title:
-          type: string
-        description:
-          type: string
-        canVote:
-          type: boolean
-        votesFor:
-          type: integer
-        votesAgainst:
-          type: integer
-        isFlagged:
-          type: boolean
         createdOn:
           type: integer
           format: Epoch time (in seconds)
+        username:
+          type: string
+        comment:
+          type: string
+  newComment:
+    type: object
+    properties:
+      comment:
+        type: string
+    required:
+      - comment
   loginCredentials:
     type: object
     properties:
@@ -376,20 +464,3 @@ definitions:
         type: string
       password:
         type: string
-  newVote:
-    type: object
-    properties:
-      battleId:
-        type: string
-      isVoteFor:
-        type: boolean
-    required:
-      - battleId
-      - isVoteFor
-  newFlag:
-    type: object
-    properties:
-      battleId:
-        type: string
-    required:
-      - battleId

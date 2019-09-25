@@ -10,7 +10,6 @@ import (
 
 const globalKeyPattern = "battleIds:%s"
 const authorKeyPattern = "battleIds:forAuthor:%s:%s"
-const voterKeyPattern = "battleIds:forVoter:%s"
 
 // Indexer is used to index Battles in a variety of ways
 type Indexer struct {
@@ -45,13 +44,6 @@ func (indexer *Indexer) Add(battle *Battle) error {
 	return nil
 }
 
-// AddVoter adds a Battle to a voter's history index
-func (indexer *Indexer) AddVoter(userID string, battleID string) error {
-	key := fmt.Sprintf(voterKeyPattern, userID)
-	score := float64(time.NowUnix())
-	return indexer.repository.SetScore(key, battleID, score)
-}
-
 // GetGlobal gets a range of global Battle IDs
 func (indexer *Indexer) GetGlobal(sort string, page int, pageSize int) ([]string, error) {
 	key := fmt.Sprintf(globalKeyPattern, sort)
@@ -62,13 +54,6 @@ func (indexer *Indexer) GetGlobal(sort string, page int, pageSize int) ([]string
 // GetByAuthor gets a range of Battle IDs authored by the given user ID
 func (indexer *Indexer) GetByAuthor(userID string, sort string, page int, pageSize int) ([]string, error) {
 	key := fmt.Sprintf(authorKeyPattern, userID, sort)
-	offset, limit := indexer.toRange(page, pageSize)
-	return indexer.repository.GetRange(key, offset, limit)
-}
-
-// GetByVoter gets a range of Battle IDs voted on by the given user ID
-func (indexer *Indexer) GetByVoter(userID string, page int, pageSize int) ([]string, error) {
-	key := fmt.Sprintf(voterKeyPattern, userID)
 	offset, limit := indexer.toRange(page, pageSize)
 	return indexer.repository.GetRange(key, offset, limit)
 }
