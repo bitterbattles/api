@@ -2,19 +2,12 @@ package main
 
 import (
 	"github.com/bitterbattles/api/pkg/comments"
-	"github.com/bitterbattles/api/pkg/commentsget"
+	"github.com/bitterbattles/api/pkg/http"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 )
 
 const (
-	idParam         = "id"
-	pageParam       = "page"
-	pageSizeParam   = "pageSize"
-	minPage         = 1
-	defaultPage     = 1
-	minPageSize     = 1
-	maxPageSize     = 100
-	defaultPageSize = 50
+	idParam = "id"
 )
 
 // Processor represents a request processor
@@ -38,17 +31,20 @@ func (processor *Processor) NewRequestBody() interface{} {
 
 // Process processes a request
 func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
-	battleID := input.PathParams[idParam]
-	page := commentsget.GetPage(input)
-	pageSize := commentsget.GetPageSize(input)
-	commentIDs, err := processor.indexer.GetByBattle(battleID, page, pageSize)
+	userID := input.AuthContext.UserID
+	commentID := input.PathParams[idParam]
+	isAuthor, err := processor.indexer.IsCommentAuthor(userID, commentID)
 	if err != nil {
 		return nil, err
 	}
-	responses, err := commentsget.CreateResponses(commentIDs, processor.repository)
+	if !isAuthor {
+		output := api.NewOutputWithStatus(http.NotFound, nil)
+		return output, nil
+	}
+	err = processor.repository.DeleteByID(commentID)
 	if err != nil {
 		return nil, err
 	}
-	output := api.NewOutput(responses)
+	output := api.NewOutputWithStatus(http.NoContent, nil)
 	return output, nil
 }

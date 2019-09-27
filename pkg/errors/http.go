@@ -39,6 +39,11 @@ func NewForbiddenError(message string) *HTTPError {
 	return newHTTPError(http.Forbidden, http.Forbidden, message)
 }
 
+// NewNotFoundError creates a new HTTPError instance representing a Not Found error
+func NewNotFoundError(message string) *HTTPError {
+	return newHTTPError(http.NotFound, http.NotFound, message)
+}
+
 func newHTTPError(statusCode int, errorCode int, errorMessage string) *HTTPError {
 	return &HTTPError{
 		statusCode:   statusCode,

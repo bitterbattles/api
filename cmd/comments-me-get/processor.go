@@ -7,14 +7,7 @@ import (
 )
 
 const (
-	idParam         = "id"
-	pageParam       = "page"
-	pageSizeParam   = "pageSize"
-	minPage         = 1
-	defaultPage     = 1
-	minPageSize     = 1
-	maxPageSize     = 100
-	defaultPageSize = 50
+	idParam = "id"
 )
 
 // Processor represents a request processor
@@ -38,10 +31,10 @@ func (processor *Processor) NewRequestBody() interface{} {
 
 // Process processes a request
 func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
-	battleID := input.PathParams[idParam]
 	page := commentsget.GetPage(input)
 	pageSize := commentsget.GetPageSize(input)
-	commentIDs, err := processor.indexer.GetByBattle(battleID, page, pageSize)
+	userID := input.AuthContext.UserID
+	commentIDs, err := processor.indexer.GetByAuthor(userID, page, pageSize)
 	if err != nil {
 		return nil, err
 	}
