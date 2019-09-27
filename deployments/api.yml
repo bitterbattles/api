@@ -9,6 +9,24 @@ Parameters:
   BattlesTableWCUs:
     Type: Number
     Default: 1
+  BattlesTableUserIdRCUs:
+    Type: Number
+    Default: 1
+  BattlesTableUserIdWCUs:
+    Type: Number
+    Default: 1
+  CommentsTableRCUs:
+    Type: Number
+    Default: 1
+  CommentsTableWCUs:
+    Type: Number
+    Default: 1
+  CommentsTableUserIdRCUs:
+    Type: Number
+    Default: 1
+  CommentsTableUserIdWCUs:
+    Type: Number
+    Default: 1
   UsersTableRCUs:
     Type: Number
     Default: 1
@@ -102,11 +120,49 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: userId
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref BattlesTableUserIdRCUs
+            WriteCapacityUnits: !Ref BattlesTableUserIdWCUs
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
+  CommentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: comments
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref CommentsTableRCUs
+        WriteCapacityUnits: !Ref CommentsTableWCUs
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: userId
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: !Ref CommentsTableUserIdRCUs
+            WriteCapacityUnits: !Ref CommentsTableUserIdWCUs
   UsersTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -321,6 +377,72 @@ Resources:
           REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+  BattlesIdGetLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: battles-id-get
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: battles-id-get.zip
+      Runtime: go1.x
+      Handler: battles-id-get
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
+          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+  BattlesIdCommentsGetLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: battles-id-comments-get
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: battles-id-comments-get.zip
+      Runtime: go1.x
+      Handler: battles-id-comments-get
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
+          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+  BattlesIdCommentsPostLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: battles-id-comments-post
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: battles-id-comments-post.zip
+      Runtime: go1.x
+      Handler: battles-id-comments-post
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
+          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   BattlesStreamLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -348,6 +470,80 @@ Resources:
     Properties:
       EventSourceArn: !GetAtt BattlesTable.StreamArn
       FunctionName: !GetAtt BattlesStreamLambda.Arn
+      Enabled: true
+      BatchSize: 100
+      StartingPosition: TRIM_HORIZON
+  CommentsMeGetLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: comments-me-get
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: comments-me-get.zip
+      Runtime: go1.x
+      Handler: comments-me-get
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
+          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+  CommentsMeIdDeleteLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: comments-me-id-delete
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: comments-me-id-delete.zip
+      Runtime: go1.x
+      Handler: comments-me-id-delete
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
+          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+  CommentsStreamLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: comments-stream
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: comments-stream.zip
+      Runtime: go1.x
+      Handler: comments-stream
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
+          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+  CommentsStreamTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt CommentsTable.StreamArn
+      FunctionName: !GetAtt CommentsStreamLambda.Arn
       Enabled: true
       BatchSize: 100
       StartingPosition: TRIM_HORIZON
@@ -439,6 +635,36 @@ Resources:
           REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+  UsersStreamLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: users-stream
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: users-stream.zip
+      Runtime: go1.x
+      Handler: users-stream
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
+          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+  UsersStreamTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt UsersTable.StreamArn
+      FunctionName: !GetAtt UsersStreamLambda.Arn
+      Enabled: true
+      BatchSize: 100
+      StartingPosition: TRIM_HORIZON
   VotesPostLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -598,6 +824,25 @@ Resources:
       RestApiId: !Ref API
       ParentId: !Ref BattlesResource
       PathPart: "{id}"
+  BattlesIdGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref BattlesIdResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt BattlesIdGetLambda.Arn]
+        PassthroughBehavior: NEVER
+  BattlesIdGetPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt BattlesIdGetLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/GET/battles/*", API: !Ref API]
   BattlesIdDeleteMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -617,6 +862,106 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/DELETE/battles/*", API: !Ref API]
+  BattlesIdCommentsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !Ref BattlesIdResource
+      PathPart: "{id}"
+  BattlesIdCommentsGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref BattlesIdCommentsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt BattlesIdCommentsGetLambda.Arn]
+        PassthroughBehavior: NEVER
+  BattlesIdCommentsGetPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt BattlesIdCommentsGetLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/GET/battles/*/comments", API: !Ref API]
+  BattlesIdCommentsPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref BattlesIdCommentsResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt BattlesIdCommentsPostLambda.Arn]
+        PassthroughBehavior: NEVER
+  BattlesIdCommentsPostPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt BattlesIdCommentsPostLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/POST/battles/*/comments", API: !Ref API]
+  CommentsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !GetAtt API.RootResourceId
+      PathPart: comments
+  CommentsMeResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !Ref CommentsResource
+      PathPart: "me"
+  CommentsMeGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref CommentsMeResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt CommentsMeGetLambda.Arn]
+        PassthroughBehavior: NEVER
+  CommentsMeGetPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt CommentsMeGetLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/GET/comments/me", API: !Ref API]
+  CommentsMeIdResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref API
+      ParentId: !Ref CommentsMeResource
+      PathPart: "{id}"
+  CommentsMeIdDeleteMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref API
+      ResourceId: !Ref CommentsMeIdResource
+      HttpMethod: DELETE
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub ["arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations", LambdaArn: !GetAtt CommentsMeIdDeleteLambda.Arn]
+        PassthroughBehavior: NEVER
+  CommentsMeIdDeletePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt CommentsMeIdDeleteLambda.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${API}/*/DELETE/comments/me/*", API: !Ref API]
   LoginsResource:
     Type: AWS::ApiGateway::Resource
     Properties:

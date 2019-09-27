@@ -56,6 +56,40 @@
 					"response": []
 				},
 				{
+					"name": "Get a battle by ID",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "bc26b4c9-1558-417b-8fc3-7716ee4c64da",
+								"exec": [
+									"var accessToken = pm.globals.get(\"accessToken\");",
+									"if (accessToken) {",
+									"    var Header = require('postman-collection').Header;",
+									"    pm.request.headers.add(new Header(\"Authorization: Bearer \" + accessToken));",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiRoot}}/battles/bht0d94ktakc72k56ju0",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"battles",
+								"bht0d94ktakc72k56ju0"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Create a battle",
 					"request": {
 						"method": "POST",
@@ -156,6 +190,168 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "comments",
+			"item": [
+				{
+					"name": "List battle comments",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "bc26b4c9-1558-417b-8fc3-7716ee4c64da",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiRoot}}/battles/bht0d94ktakc72k56ju0/comments?page=1&pageSize=10",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"battles",
+								"bht0d94ktakc72k56ju0",
+								"comments"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create a comment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"comment\": \"comment\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiRoot}}/battles/bht0d94ktakc72k56ju0/comments",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"battles",
+								"bht0d94ktakc72k56ju0",
+								"comments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List my comments",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "bc26b4c9-1558-417b-8fc3-7716ee4c64da",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apiRoot}}/comments/me?page=1&pageSize=10",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"comments",
+								"me"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete one of my comments",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{apiRoot}}/comments/me/bi0rt02ft3os72gmcdh0",
+							"host": [
+								"{{apiRoot}}"
+							],
+							"path": [
+								"comments",
+								"me",
+								"bi0rt02ft3os72gmcdh0"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
 		},
 		{
 			"name": "logins",
