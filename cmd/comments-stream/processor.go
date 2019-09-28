@@ -4,35 +4,42 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/comments"
 	"github.com/bitterbattles/api/pkg/lambda/stream"
 )
 
 // Processor represents a stream event processor
 type Processor struct {
-	indexer *comments.Indexer
+	indexer    *comments.Indexer
+	repository battles.RepositoryInterface
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(indexer *comments.Indexer) *Processor {
+func NewProcessor(indexer *comments.Indexer, repository battles.RepositoryInterface) *Processor {
 	return &Processor{
-		indexer: indexer,
+		indexer:    indexer,
+		repository: repository,
 	}
 }
 
 // Process processes a DynamoDB event
 func (processor *Processor) Process(event *stream.Event) error {
-	changes := make(map[string]*change)
+	changedComments := make(map[string]*changedComment)
+	changedBattles := make(map[string]*changedBattle)
 	for _, record := range event.Records {
-		processor.captureChange(&record, changes)
+		processor.captureChanges(&record, changedComments, changedBattles)
 	}
-	for _, change := range changes {
-		processor.processChange(change)
+	for _, change := range changedComments {
+		processor.processCommentChange(change)
+	}
+	for battleID, change := range changedBattles {
+		processor.processBattleChange(battleID, change)
 	}
 	return nil
 }
 
-func (processor *Processor) captureChange(record *stream.EventRecord, changes map[string]*change) {
+func (processor *Processor) captureChanges(record *stream.EventRecord, changedComments map[string]*changedComment, changedBattles map[string]*changedBattle) {
 	var err error
 	oldComment := &comments.Comment{}
 	err = dynamodbattribute.UnmarshalMap(record.Change.OldImage, oldComment)
@@ -46,25 +53,36 @@ func (processor *Processor) captureChange(record *stream.EventRecord, changes ma
 		log.Println("Failed to unmarshal new image in DynamoDB event. Error:", err)
 		return
 	}
-	id := newComment.ID
-	if id == "" {
+	commentID := newComment.ID
+	if commentID == "" {
 		log.Println("Unexpected missing new Comment ID.")
 		return
 	}
-	c := changes[id]
-	if c == nil {
-		c = &change{
+	commentChange := changedComments[commentID]
+	if commentChange == nil {
+		commentChange = &changedComment{
 			oldComment: oldComment,
 			newComment: newComment,
 		}
 	} else {
-		c.newComment = newComment
-		changes[id] = c
+		commentChange.newComment = newComment
+		changedComments[commentID] = commentChange
 	}
-	changes[id] = c
+	changedComments[commentID] = commentChange
+	battleID := newComment.BattleID
+	if battleID == "" {
+		log.Println("Unexpected missing new Battle ID.")
+		return
+	}
+	battleChange := changedBattles[battleID]
+	if battleChange == nil {
+		battleChange = &changedBattle{}
+	}
+	battleChange.deltaComments++
+	changedBattles[battleID] = battleChange
 }
 
-func (processor *Processor) processChange(change *change) {
+func (processor *Processor) processCommentChange(change *changedComment) {
 	var err error
 	oldComment := change.oldComment
 	newComment := change.newComment
@@ -84,5 +102,13 @@ func (processor *Processor) processChange(change *change) {
 		if err != nil {
 			log.Println("Failed to add new comment to indexes. Error:", err)
 		}
+	}
+}
+
+func (processor *Processor) processBattleChange(battleID string, change *changedBattle) {
+	var err error
+	err = processor.repository.IncrementComments(battleID, change.deltaComments)
+	if err != nil {
+		log.Println("Failed to increment comments. Error:", err)
 	}
 }

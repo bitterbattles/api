@@ -11,14 +11,12 @@ import (
 
 // Processor represents a stream processor
 type Processor struct {
-	indexer    *battles.Indexer
 	repository battles.RepositoryInterface
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(indexer *battles.Indexer, repository battles.RepositoryInterface) *Processor {
+func NewProcessor(repository battles.RepositoryInterface) *Processor {
 	return &Processor{
-		indexer:    indexer,
 		repository: repository,
 	}
 }

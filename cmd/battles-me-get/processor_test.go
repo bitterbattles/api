@@ -23,7 +23,7 @@ func TestProcessorBadIndexEntry(t *testing.T) {
 	indexRepository.SetScore(key, "badId", 0)
 	repository := battlesMocks.NewRepository()
 	addBattles(indexRepository, repository, userID, testSort, false, 1)
-	expectedResponse := `[{"id":"id0","createdOn":0,"username":"username","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"verdict":4}]`
+	expectedResponse := `[{"id":"id0","createdOn":0,"username":"username","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"comments":0,"verdict":4}]`
 	authContext := &api.AuthContext{
 		UserID: userID,
 	}
@@ -45,7 +45,7 @@ func TestProcessor(t *testing.T) {
 	indexRepository := indexMocks.NewRepository()
 	repository := battlesMocks.NewRepository()
 	addBattles(indexRepository, repository, "userId0", testSort, false, 3)
-	expectedResponse := `[{"id":"id0","createdOn":0,"username":"username","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"verdict":4},{"id":"id1","createdOn":3,"username":"username","title":"title1","description":"description1","canVote":false,"votesFor":1,"votesAgainst":2,"verdict":3}]`
+	expectedResponse := `[{"id":"id0","createdOn":0,"username":"username","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"comments":0,"verdict":4},{"id":"id1","createdOn":3,"username":"username","title":"title1","description":"description1","canVote":false,"votesFor":1,"votesAgainst":2,"comments":3,"verdict":3}]`
 	authContext := &api.AuthContext{
 		UserID: "userId0",
 	}
@@ -67,6 +67,7 @@ func addBattles(indexRepository *indexMocks.Repository, repository *battlesMocks
 			Description:  fmt.Sprintf("description%d", i),
 			VotesFor:     i,
 			VotesAgainst: i * 2,
+			Comments:     i * 3,
 			CreatedOn:    int64(i * 3),
 			State:        state,
 		}

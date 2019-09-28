@@ -106,6 +106,7 @@ func CreateResponse(userID string, battleID string, repository battles.Repositor
 		CanVote:      canVote,
 		VotesFor:     battle.VotesFor,
 		VotesAgainst: battle.VotesAgainst,
+		Comments:     battle.Comments,
 		Verdict:      determineVerdict(battle.CreatedOn, float64(battle.VotesFor), float64(battle.VotesAgainst)),
 	}
 	return response, nil

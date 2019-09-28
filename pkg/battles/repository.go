@@ -19,6 +19,7 @@ type RepositoryInterface interface {
 	DeleteByID(string) error
 	GetByID(string) (*Battle, error)
 	IncrementVotes(string, int, int) error
+	IncrementComments(string, int) error
 }
 
 // Repository is an implementation of RepositoryInterface using DynamoDB
@@ -119,6 +120,31 @@ func (repository *Repository) IncrementVotes(id string, deltaVotesFor int, delta
 			},
 			":deltaVotesAgainst": {
 				N: aws.String(fmt.Sprintf("%d", deltaVotesAgainst)),
+			},
+		},
+	})
+	return err
+}
+
+// IncrementComments increments the comments for a given Battle ID
+func (repository *Repository) IncrementComments(id string, deltaComments int) error {
+	conditionExpression := "id = :id"
+	updateExpression := "ADD comments :deltaComments"
+	_, err := repository.client.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			idFieldName: {
+				S: aws.String(id),
+			},
+		},
+		ConditionExpression: &conditionExpression,
+		UpdateExpression:    &updateExpression,
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":id": {
+				S: aws.String(id),
+			},
+			":deltaComments": {
+				N: aws.String(fmt.Sprintf("%d", deltaComments)),
 			},
 		},
 	})

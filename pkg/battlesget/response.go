@@ -10,5 +10,6 @@ type Response struct {
 	CanVote      bool   `json:"canVote"`
 	VotesFor     int    `json:"votesFor"`
 	VotesAgainst int    `json:"votesAgainst"`
+	Comments     int    `json:"comments"`
 	Verdict      int    `json:"verdict"`
 }

@@ -24,18 +24,18 @@ func TestProcessorNotFoundMissing(t *testing.T) {
 }
 
 func TestProcessorCanVoteTrue(t *testing.T) {
-	expectedResponse := `{"id":"id0","createdOn":2,"username":"username0","title":"title0","description":"description0","canVote":true,"votesFor":0,"votesAgainst":1,"verdict":3}`
+	expectedResponse := `{"id":"id0","createdOn":2,"username":"username0","title":"title0","description":"description0","canVote":true,"votesFor":0,"votesAgainst":1,"comments":3,"verdict":3}`
 	testProcessor(t, "id0", "userId1", http.OK, expectedResponse)
 }
 
 func TestProcessorCanVoteFalse(t *testing.T) {
-	expectedResponse := `{"id":"id0","createdOn":2,"username":"username0","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":1,"verdict":3}`
+	expectedResponse := `{"id":"id0","createdOn":2,"username":"username0","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":1,"comments":3,"verdict":3}`
 	testProcessor(t, "id0", "userId0", http.OK, expectedResponse)
 }
 
 func testProcessor(t *testing.T, battleID string, userID string, expectedStatusCode int, expectedResponseBody string) {
 	battlesRepository := battlesMocks.NewRepository()
-	battle0 := battles.Battle{
+	battle := battles.Battle{
 		ID:           "id0",
 		UserID:       "userId0",
 		Username:     "username0",
@@ -43,22 +43,11 @@ func testProcessor(t *testing.T, battleID string, userID string, expectedStatusC
 		Description:  "description0",
 		VotesFor:     0,
 		VotesAgainst: 1,
+		Comments:     3,
 		CreatedOn:    2,
 		State:        battles.Active,
 	}
-	battlesRepository.Add(&battle0)
-	battle1 := battles.Battle{
-		ID:           "id1",
-		UserID:       "userId1",
-		Username:     "username1",
-		Title:        "title1",
-		Description:  "description1",
-		VotesFor:     3,
-		VotesAgainst: 4,
-		CreatedOn:    5,
-		State:        battles.Deleted,
-	}
-	battlesRepository.Add(&battle1)
+	battlesRepository.Add(&battle)
 	votesRepository := votesMocks.NewRepository()
 	votesRepository.Add(&votes.Vote{
 		UserID:   "userId0",

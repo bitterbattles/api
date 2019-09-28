@@ -44,6 +44,16 @@ func (repository *Repository) IncrementVotes(id string, deltaVotesFor int, delta
 	return nil
 }
 
+// IncrementComments increments the votes for a given Battle ID
+func (repository *Repository) IncrementComments(id string, deltaComments int) error {
+	battle := repository.data[id]
+	if battle != nil {
+		battle.Comments += deltaComments
+		repository.data[id] = battle
+	}
+	return nil
+}
+
 // GetLastAdded gets the most recently added Battle
 func (repository *Repository) GetLastAdded() *battles.Battle {
 	return repository.lastAdded
