@@ -374,6 +374,8 @@ definitions:
         type: integer
       votesAgainst:
         type: integer
+      comments:
+        type: integer
       verdict:
         type: integer
   newBattle:
