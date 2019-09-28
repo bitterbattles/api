@@ -66,7 +66,6 @@ func (processor *Processor) captureChanges(record *stream.EventRecord, changedCo
 		}
 	} else {
 		commentChange.newComment = newComment
-		changedComments[commentID] = commentChange
 	}
 	changedComments[commentID] = commentChange
 	battleID := newComment.BattleID

@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	tableName   = "comments"
-	idFieldName = "id"
+	tableName       = "comments"
+	idFieldName     = "id"
+	userIDFieldName = "userId"
 )
 
 // RepositoryInterface defines an interface for a Comment repository
@@ -18,6 +19,7 @@ type RepositoryInterface interface {
 	Add(*Comment) error
 	DeleteByID(string) error
 	GetByID(string) (*Comment, error)
+	UpdateUsername(string, string) error
 }
 
 // Repository is an implementation of RepositoryInterface using DynamoDB
@@ -94,4 +96,33 @@ func (repository *Repository) GetByID(id string) (*Comment, error) {
 		return nil, err
 	}
 	return comment, nil
+}
+
+// UpdateUsername updates the specified user's username
+func (repository *Repository) UpdateUsername(userID string, username string) error {
+	conditionExpression := "userId = :userId"
+	updateExpression := "SET username = :username"
+	usernameAttribute := "username"
+	_, err := repository.client.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			userIDFieldName: {
+				S: aws.String(userID),
+			},
+		},
+		ConditionExpression: &conditionExpression,
+		UpdateExpression:    &updateExpression,
+		ExpressionAttributeNames: map[string]*string{
+			"username": &usernameAttribute,
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":userId": {
+				S: aws.String(userID),
+			},
+			":username": {
+				S: aws.String(username),
+			},
+		},
+	})
+	return err
 }

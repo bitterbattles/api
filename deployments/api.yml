@@ -639,6 +639,36 @@ Resources:
           REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+  UsersStreamLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: users-stream
+      Code:
+        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
+        S3Key: users-stream.zip
+      Runtime: go1.x
+      Handler: users-stream
+      Role: !GetAtt LambdaRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+      Environment:
+        Variables:
+          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
+          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
+  UsersStreamTrigger:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt UsersTable.StreamArn
+      FunctionName: !GetAtt UsersStreamLambda.Arn
+      Enabled: true
+      BatchSize: 100
+      StartingPosition: TRIM_HORIZON
   VotesPostLambda:
     Type: AWS::Lambda::Function
     Properties:

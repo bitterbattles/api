@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	tableName   = "battles"
-	idFieldName = "id"
+	tableName       = "battles"
+	idFieldName     = "id"
+	userIDFieldName = "userId"
 )
 
 // RepositoryInterface defines an interface for a Battle repository
@@ -20,6 +21,7 @@ type RepositoryInterface interface {
 	GetByID(string) (*Battle, error)
 	IncrementVotes(string, int, int) error
 	IncrementComments(string, int) error
+	UpdateUsername(string, string) error
 }
 
 // Repository is an implementation of RepositoryInterface using DynamoDB
@@ -145,6 +147,35 @@ func (repository *Repository) IncrementComments(id string, deltaComments int) er
 			},
 			":deltaComments": {
 				N: aws.String(fmt.Sprintf("%d", deltaComments)),
+			},
+		},
+	})
+	return err
+}
+
+// UpdateUsername updates the specified user's username
+func (repository *Repository) UpdateUsername(userID string, username string) error {
+	conditionExpression := "userId = :userId"
+	updateExpression := "SET username = :username"
+	usernameAttribute := "username"
+	_, err := repository.client.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			userIDFieldName: {
+				S: aws.String(userID),
+			},
+		},
+		ConditionExpression: &conditionExpression,
+		UpdateExpression:    &updateExpression,
+		ExpressionAttributeNames: map[string]*string{
+			"username": &usernameAttribute,
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":userId": {
+				S: aws.String(userID),
+			},
+			":username": {
+				S: aws.String(username),
 			},
 		},
 	})

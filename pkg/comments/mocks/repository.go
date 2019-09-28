@@ -33,6 +33,17 @@ func (repository *Repository) GetByID(id string) (*comments.Comment, error) {
 	return repository.data[id], nil
 }
 
+// UpdateUsername updates the specified user's username
+func (repository *Repository) UpdateUsername(userID string, username string) error {
+	for id, comment := range repository.data {
+		if comment.UserID == userID {
+			comment.Username = "[Deleted]"
+			repository.data[id] = comment
+		}
+	}
+	return nil
+}
+
 // GetLastAdded gets the most recently added Comment
 func (repository *Repository) GetLastAdded() *comments.Comment {
 	return repository.lastAdded

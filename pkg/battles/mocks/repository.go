@@ -54,6 +54,17 @@ func (repository *Repository) IncrementComments(id string, deltaComments int) er
 	return nil
 }
 
+// UpdateUsername updates the specified user's username
+func (repository *Repository) UpdateUsername(userID string, username string) error {
+	for id, battle := range repository.data {
+		if battle.UserID == userID {
+			battle.Username = "[Deleted]"
+			repository.data[id] = battle
+		}
+	}
+	return nil
+}
+
 // GetLastAdded gets the most recently added Battle
 func (repository *Repository) GetLastAdded() *battles.Battle {
 	return repository.lastAdded
