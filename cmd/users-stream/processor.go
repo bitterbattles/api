@@ -71,10 +71,17 @@ func (processor *Processor) captureChange(record *stream.EventRecord, changes ma
 }
 
 func (processor *Processor) processChange(userID string, change *change) {
+	var err error
 	newUser := change.newUser
 	if newUser.ID == "" {
 		// Deleted user
-		processor.battlesRepository.UpdateUsername(userID, users.AnonymousUsername)
-		processor.commentsRepository.UpdateUsername(userID, users.AnonymousUsername)
+		err = processor.battlesRepository.UpdateUsername(userID, users.AnonymousUsername)
+		if err != nil {
+			log.Println("Failed to update username across battles. Error:", err)
+		}
+		err = processor.commentsRepository.UpdateUsername(userID, users.AnonymousUsername)
+		if err != nil {
+			log.Println("Failed to update username across comments. Error:", err)
+		}
 	}
 }
