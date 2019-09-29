@@ -9,22 +9,10 @@ Parameters:
   BattlesTableWCUs:
     Type: Number
     Default: 1
-  BattlesTableUserIdRCUs:
-    Type: Number
-    Default: 1
-  BattlesTableUserIdWCUs:
-    Type: Number
-    Default: 1
   CommentsTableRCUs:
     Type: Number
     Default: 1
   CommentsTableWCUs:
-    Type: Number
-    Default: 1
-  CommentsTableUserIdRCUs:
-    Type: Number
-    Default: 1
-  CommentsTableUserIdWCUs:
     Type: Number
     Default: 1
   UsersTableRCUs:
@@ -120,21 +108,9 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
-        - AttributeName: userId
-          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      GlobalSecondaryIndexes:
-        - IndexName: userId
-          KeySchema:
-            - AttributeName: userId
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
-          ProvisionedThroughput:
-            ReadCapacityUnits: !Ref BattlesTableUserIdRCUs
-            WriteCapacityUnits: !Ref BattlesTableUserIdWCUs
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
   CommentsTable:
@@ -148,21 +124,9 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
-        - AttributeName: userId
-          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      GlobalSecondaryIndexes:
-        - IndexName: userId
-          KeySchema:
-            - AttributeName: userId
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
-          ProvisionedThroughput:
-            ReadCapacityUnits: !Ref CommentsTableUserIdRCUs
-            WriteCapacityUnits: !Ref CommentsTableUserIdWCUs
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
   UsersTable:
@@ -191,8 +155,6 @@ Resources:
           ProvisionedThroughput:
             ReadCapacityUnits: !Ref UsersTableUsernameRCUs
             WriteCapacityUnits: !Ref UsersTableUsernameWCUs
-      StreamSpecification:
-          StreamViewType: NEW_AND_OLD_IMAGES
   VotesTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -639,36 +601,6 @@ Resources:
           REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
-  UsersStreamLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: users-stream
-      Code:
-        S3Bucket: !If [IsProd, "bitterbattles-api-lambda", !Sub "bitterbattles-api-${EnvName}-lambda"]
-        S3Key: users-stream.zip
-      Runtime: go1.x
-      Handler: users-stream
-      Role: !GetAtt LambdaRole.Arn
-      VpcConfig:
-        SubnetIds:
-          - !Ref Subnet0
-          - !Ref Subnet1
-          - !Ref Subnet2
-        SecurityGroupIds:
-          - !GetAtt VPC.DefaultSecurityGroup
-      Environment:
-        Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
-          ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
-          REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
-  UsersStreamTrigger:
-    Type: AWS::Lambda::EventSourceMapping
-    Properties:
-      EventSourceArn: !GetAtt UsersTable.StreamArn
-      FunctionName: !GetAtt UsersStreamLambda.Arn
-      Enabled: true
-      BatchSize: 100
-      StartingPosition: TRIM_HORIZON
   VotesPostLambda:
     Type: AWS::Lambda::Function
     Properties:

@@ -4,6 +4,7 @@ import (
 	"github.com/bitterbattles/api/pkg/comments"
 	"github.com/bitterbattles/api/pkg/commentsget"
 	"github.com/bitterbattles/api/pkg/lambda/api"
+	"github.com/bitterbattles/api/pkg/users"
 )
 
 const (
@@ -12,15 +13,17 @@ const (
 
 // Processor represents a request processor
 type Processor struct {
-	indexer    *comments.Indexer
-	repository comments.RepositoryInterface
+	indexer            *comments.Indexer
+	commentsRepository comments.RepositoryInterface
+	usersRepository    users.RepositoryInterface
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(indexer *comments.Indexer, repository comments.RepositoryInterface) *Processor {
+func NewProcessor(indexer *comments.Indexer, commentsRepository comments.RepositoryInterface, usersRepository users.RepositoryInterface) *Processor {
 	return &Processor{
-		indexer:    indexer,
-		repository: repository,
+		indexer:            indexer,
+		commentsRepository: commentsRepository,
+		usersRepository:    usersRepository,
 	}
 }
 
@@ -38,7 +41,7 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	if err != nil {
 		return nil, err
 	}
-	responses, err := commentsget.CreateResponses(commentIDs, processor.repository)
+	responses, err := commentsget.CreateResponses(commentIDs, processor.commentsRepository, processor.usersRepository)
 	if err != nil {
 		return nil, err
 	}

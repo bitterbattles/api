@@ -12,57 +12,55 @@ import (
 	indexMocks "github.com/bitterbattles/api/pkg/index/mocks"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	. "github.com/bitterbattles/api/pkg/tests"
+	"github.com/bitterbattles/api/pkg/users"
+	usersMocks "github.com/bitterbattles/api/pkg/users/mocks"
+	"github.com/bitterbattles/api/pkg/votes"
+	votesMocks "github.com/bitterbattles/api/pkg/votes/mocks"
 )
 
 const testSort = "recent"
+const userID = "userId0"
 
 func TestProcessorBadIndexEntry(t *testing.T) {
-	userID := "userId0"
 	indexRepository := indexMocks.NewRepository()
 	key := fmt.Sprintf("battleIds:forAuthor:%s:%s", userID, testSort)
 	indexRepository.SetScore(key, "badId", 0)
-	repository := battlesMocks.NewRepository()
-	addBattles(indexRepository, repository, userID, testSort, false, 1)
-	expectedResponse := `[{"id":"id0","createdOn":0,"username":"username","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"comments":0,"verdict":4}]`
-	authContext := &api.AuthContext{
-		UserID: userID,
-	}
-	testProcessor(t, indexRepository, repository, authContext, testSort, "1", "2", expectedResponse)
+	battlesRepository := battlesMocks.NewRepository()
+	votesRepository := votesMocks.NewRepository()
+	addBattles(indexRepository, battlesRepository, votesRepository, testSort, false, 1)
+	expectedResponse := `[{"id":"id0","createdOn":0,"username":"username0","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"comments":0,"verdict":4}]`
+	testProcessor(t, indexRepository, battlesRepository, votesRepository, testSort, "1", "2", expectedResponse)
 }
 
 func TestProcessorDeletedIndexEntry(t *testing.T) {
 	indexRepository := indexMocks.NewRepository()
-	repository := battlesMocks.NewRepository()
-	addBattles(indexRepository, repository, "userId0", testSort, true, 1)
+	battlesRepository := battlesMocks.NewRepository()
+	votesRepository := votesMocks.NewRepository()
+	addBattles(indexRepository, battlesRepository, votesRepository, testSort, true, 1)
 	expectedResponse := `[]`
-	authContext := &api.AuthContext{
-		UserID: "userId0",
-	}
-	testProcessor(t, indexRepository, repository, authContext, testSort, "1", "2", expectedResponse)
+	testProcessor(t, indexRepository, battlesRepository, votesRepository, testSort, "1", "2", expectedResponse)
 }
 
 func TestProcessor(t *testing.T) {
 	indexRepository := indexMocks.NewRepository()
-	repository := battlesMocks.NewRepository()
-	addBattles(indexRepository, repository, "userId0", testSort, false, 3)
-	expectedResponse := `[{"id":"id0","createdOn":0,"username":"username","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"comments":0,"verdict":4},{"id":"id1","createdOn":3,"username":"username","title":"title1","description":"description1","canVote":false,"votesFor":1,"votesAgainst":2,"comments":3,"verdict":3}]`
-	authContext := &api.AuthContext{
-		UserID: "userId0",
-	}
-	testProcessor(t, indexRepository, repository, authContext, testSort, "1", "2", expectedResponse)
+	battlesRepository := battlesMocks.NewRepository()
+	votesRepository := votesMocks.NewRepository()
+	addBattles(indexRepository, battlesRepository, votesRepository, testSort, false, 3)
+	expectedResponse := `[{"id":"id0","createdOn":0,"username":"username0","title":"title0","description":"description0","canVote":false,"votesFor":0,"votesAgainst":0,"comments":0,"verdict":4},{"id":"id1","createdOn":3,"username":"username0","title":"title1","description":"description1","canVote":false,"votesFor":1,"votesAgainst":2,"comments":3,"verdict":3}]`
+	testProcessor(t, indexRepository, battlesRepository, votesRepository, testSort, "1", "2", expectedResponse)
 }
 
-func addBattles(indexRepository *indexMocks.Repository, repository *battlesMocks.Repository, userID string, sort string, isDeleted bool, count int) {
+func addBattles(indexRepository *indexMocks.Repository, battlesRepository *battlesMocks.Repository, votesRepository *votesMocks.Repository, sort string, isDeleted bool, count int) {
 	key := fmt.Sprintf("battleIds:forAuthor:%s:%s", userID, sort)
 	state := battles.Active
 	if isDeleted {
 		state = battles.Deleted
 	}
 	for i := 0; i < count; i++ {
+		battleID := fmt.Sprintf("id%d", i)
 		battle := battles.Battle{
-			ID:           fmt.Sprintf("id%d", i),
+			ID:           battleID,
 			UserID:       userID,
-			Username:     "username",
 			Title:        fmt.Sprintf("title%d", i),
 			Description:  fmt.Sprintf("description%d", i),
 			VotesFor:     i,
@@ -71,12 +69,17 @@ func addBattles(indexRepository *indexMocks.Repository, repository *battlesMocks
 			CreatedOn:    int64(i * 3),
 			State:        state,
 		}
-		repository.Add(&battle)
+		battlesRepository.Add(&battle)
 		indexRepository.SetScore(key, battle.ID, float64(i))
+		vote := &votes.Vote{
+			BattleID: battleID,
+			UserID:   userID,
+		}
+		votesRepository.Add(vote)
 	}
 }
 
-func testProcessor(t *testing.T, indexRepository *indexMocks.Repository, repository *battlesMocks.Repository, authContext *api.AuthContext, testSort string, page string, pageSize string, expectedResponseBody string) {
+func testProcessor(t *testing.T, indexRepository *indexMocks.Repository, battlesRepository *battlesMocks.Repository, votesRepository *votesMocks.Repository, testSort string, page string, pageSize string, expectedResponseBody string) {
 	queryParams := make(map[string]string)
 	if testSort != "" {
 		queryParams["sort"] = testSort
@@ -87,12 +90,21 @@ func testProcessor(t *testing.T, indexRepository *indexMocks.Repository, reposit
 	if pageSize != "" {
 		queryParams["pageSize"] = pageSize
 	}
+	authContext := &api.AuthContext{
+		UserID: "userId0",
+	}
 	input := &api.Input{
 		AuthContext: authContext,
 		QueryParams: queryParams,
 	}
 	indexer := battles.NewIndexer(indexRepository)
-	processor := NewProcessor(indexer, repository)
+	usersRepository := usersMocks.NewRepository()
+	user := &users.User{
+		ID:       "userId0",
+		Username: "username0",
+	}
+	usersRepository.Add(user)
+	processor := NewProcessor(indexer, battlesRepository, usersRepository, votesRepository)
 	output, err := processor.Process(input)
 	AssertNil(t, err)
 	AssertNotNil(t, output)

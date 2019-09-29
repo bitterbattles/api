@@ -11,6 +11,8 @@ import (
 	"github.com/bitterbattles/api/pkg/http"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	. "github.com/bitterbattles/api/pkg/tests"
+	"github.com/bitterbattles/api/pkg/users"
+	usersMocks "github.com/bitterbattles/api/pkg/users/mocks"
 	"github.com/bitterbattles/api/pkg/votes"
 	votesMocks "github.com/bitterbattles/api/pkg/votes/mocks"
 )
@@ -38,7 +40,6 @@ func testProcessor(t *testing.T, battleID string, userID string, expectedStatusC
 	battle := battles.Battle{
 		ID:           "id0",
 		UserID:       "userId0",
-		Username:     "username0",
 		Title:        "title0",
 		Description:  "description0",
 		VotesFor:     0,
@@ -48,6 +49,12 @@ func testProcessor(t *testing.T, battleID string, userID string, expectedStatusC
 		State:        battles.Active,
 	}
 	battlesRepository.Add(&battle)
+	usersRepository := usersMocks.NewRepository()
+	user := &users.User{
+		ID:       "userId0",
+		Username: "username0",
+	}
+	usersRepository.Add(user)
 	votesRepository := votesMocks.NewRepository()
 	votesRepository.Add(&votes.Vote{
 		UserID:   "userId0",
@@ -62,7 +69,7 @@ func testProcessor(t *testing.T, battleID string, userID string, expectedStatusC
 		AuthContext: authContext,
 		PathParams:  pathParams,
 	}
-	processor := NewProcessor(battlesRepository, votesRepository)
+	processor := NewProcessor(battlesRepository, usersRepository, votesRepository)
 	output, err := processor.Process(input)
 	if expectedStatusCode == http.OK {
 		AssertNil(t, err)

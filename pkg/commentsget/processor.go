@@ -3,10 +3,10 @@ package commentsget
 import (
 	"log"
 
-	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/comments"
 	"github.com/bitterbattles/api/pkg/input"
 	"github.com/bitterbattles/api/pkg/lambda/api"
+	"github.com/bitterbattles/api/pkg/users"
 )
 
 const (
@@ -17,6 +17,7 @@ const (
 	minPageSize     = 1
 	maxPageSize     = 100
 	defaultPageSize = 50
+	deletedComment  = "[Deleted]"
 )
 
 // GetPage gets and sanitizes the page param from a GET request
@@ -52,10 +53,14 @@ func GetPageSize(i *api.Input) int {
 }
 
 // CreateResponses creates a list of GET comments responses
-func CreateResponses(commentIDs []string, repository comments.RepositoryInterface) ([]*Response, error) {
+func CreateResponses(
+	commentIDs []string,
+	commentsRepository comments.RepositoryInterface,
+	usersRepository users.RepositoryInterface) ([]*Response, error) {
 	responses := make([]*Response, 0, len(commentIDs))
+	usernames := make(map[string]string)
 	for _, commentID := range commentIDs {
-		response, err := CreateResponse(commentID, repository)
+		response, err := createResponseWithUsernameMap(commentID, usernames, commentsRepository, usersRepository)
 		if err != nil {
 			return nil, err
 		}
@@ -68,21 +73,51 @@ func CreateResponses(commentIDs []string, repository comments.RepositoryInterfac
 	return responses, nil
 }
 
-// CreateResponse creates a GET comment response
-func CreateResponse(commentID string, repository comments.RepositoryInterface) (*Response, error) {
-	comment, err := repository.GetByID(commentID)
+func createResponseWithUsernameMap(
+	commentID string,
+	usernames map[string]string,
+	commentsRepository comments.RepositoryInterface,
+	usersRepository users.RepositoryInterface) (*Response, error) {
+	comment, err := commentsRepository.GetByID(commentID)
 	if err != nil {
 		return nil, err
 	}
-	if comment == nil || comment.State == battles.Deleted {
+	if comment == nil {
 		return nil, nil
+	}
+	username, err := getUsername(comment.UserID, usernames, usersRepository)
+	if err != nil {
+		return nil, err
+	}
+	commentText := comment.Comment
+	if comment.State == comments.Deleted {
+		commentText = deletedComment
 	}
 	response := &Response{
 		ID:        comment.ID,
-		CreatedOn: comment.CreatedOn,
 		BattleID:  comment.BattleID,
-		Username:  comment.Username,
-		Comment:   comment.Comment,
+		CreatedOn: comment.CreatedOn,
+		Username:  username,
+		Comment:   commentText,
 	}
 	return response, nil
+}
+
+func getUsername(userID string, usernames map[string]string, usersRepository users.RepositoryInterface) (string, error) {
+	var username string
+	if usernames != nil {
+		username := usernames[userID]
+		if username != "" {
+			return username, nil
+		}
+	}
+	user, err := usersRepository.GetByID(userID)
+	if err != nil {
+		return "", err
+	}
+	if user != nil {
+		username = user.Username
+	}
+	usernames[userID] = username
+	return username, nil
 }

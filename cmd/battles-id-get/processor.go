@@ -5,6 +5,7 @@ import (
 	"github.com/bitterbattles/api/pkg/battlesget"
 	"github.com/bitterbattles/api/pkg/errors"
 	"github.com/bitterbattles/api/pkg/lambda/api"
+	"github.com/bitterbattles/api/pkg/users"
 	"github.com/bitterbattles/api/pkg/votes"
 )
 
@@ -13,13 +14,15 @@ const idParam = "id"
 // Processor represents a request processor
 type Processor struct {
 	battlesRepository battles.RepositoryInterface
+	usersRepository   users.RepositoryInterface
 	votesRepository   votes.RepositoryInterface
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(battlesRepository battles.RepositoryInterface, votesRepository votes.RepositoryInterface) *Processor {
+func NewProcessor(battlesRepository battles.RepositoryInterface, usersRepository users.RepositoryInterface, votesRepository votes.RepositoryInterface) *Processor {
 	return &Processor{
 		battlesRepository: battlesRepository,
+		usersRepository:   usersRepository,
 		votesRepository:   votesRepository,
 	}
 }
@@ -36,7 +39,12 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	if input.AuthContext != nil {
 		userID = input.AuthContext.UserID
 	}
-	response, err := battlesget.CreateResponse(userID, battleID, processor.battlesRepository, processor.getCanVote)
+	response, err := battlesget.CreateResponse(
+		userID,
+		battleID,
+		processor.battlesRepository,
+		processor.usersRepository,
+		processor.votesRepository)
 	if err != nil {
 		return nil, err
 	}
@@ -45,15 +53,4 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	}
 	output := api.NewOutput(response)
 	return output, nil
-}
-
-func (processor *Processor) getCanVote(userID string, battle *battles.Battle) (bool, error) {
-	if userID == "" || userID == battle.UserID {
-		return false, nil
-	}
-	vote, err := processor.votesRepository.GetByUserAndBattleIDs(userID, battle.ID)
-	if err != nil {
-		return false, err
-	}
-	return (vote == nil), nil
 }

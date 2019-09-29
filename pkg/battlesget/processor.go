@@ -8,6 +8,8 @@ import (
 	"github.com/bitterbattles/api/pkg/input"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	"github.com/bitterbattles/api/pkg/time"
+	"github.com/bitterbattles/api/pkg/users"
+	"github.com/bitterbattles/api/pkg/votes"
 )
 
 const (
@@ -20,6 +22,7 @@ const (
 	minPageSize     = 1
 	maxPageSize     = 100
 	defaultPageSize = 50
+	deletedUsername = "[Deleted]"
 )
 
 // GetSort gets and sanitizes the sort param from a GET request
@@ -68,10 +71,16 @@ func GetPageSize(i *api.Input) int {
 }
 
 // CreateResponses creates a list of GET battles responses
-func CreateResponses(userID string, battleIDs []string, repository battles.RepositoryInterface, getCanVote func(string, *battles.Battle) (bool, error)) ([]*Response, error) {
+func CreateResponses(
+	userID string,
+	battleIDs []string,
+	battlesRepository battles.RepositoryInterface,
+	usersRepository users.RepositoryInterface,
+	votesRepository votes.RepositoryInterface) ([]*Response, error) {
 	responses := make([]*Response, 0, len(battleIDs))
+	usernames := make(map[string]string)
 	for _, battleID := range battleIDs {
-		response, err := CreateResponse(userID, battleID, repository, getCanVote)
+		response, err := createResponseWithUsernameMap(userID, battleID, usernames, battlesRepository, usersRepository, votesRepository)
 		if err != nil {
 			return nil, err
 		}
@@ -85,22 +94,41 @@ func CreateResponses(userID string, battleIDs []string, repository battles.Repos
 }
 
 // CreateResponse creates a GET battle response
-func CreateResponse(userID string, battleID string, repository battles.RepositoryInterface, getCanVote func(string, *battles.Battle) (bool, error)) (*Response, error) {
-	battle, err := repository.GetByID(battleID)
+func CreateResponse(
+	userID string,
+	battleID string,
+	battlesRepository battles.RepositoryInterface,
+	usersRepository users.RepositoryInterface,
+	votesRepository votes.RepositoryInterface) (*Response, error) {
+	return createResponseWithUsernameMap(userID, battleID, nil, battlesRepository, usersRepository, votesRepository)
+}
+
+func createResponseWithUsernameMap(
+	userID string,
+	battleID string,
+	usernames map[string]string,
+	battlesRepository battles.RepositoryInterface,
+	usersRepository users.RepositoryInterface,
+	votesRepository votes.RepositoryInterface) (*Response, error) {
+	battle, err := battlesRepository.GetByID(battleID)
 	if err != nil {
 		return nil, err
 	}
 	if battle == nil || battle.State == battles.Deleted {
 		return nil, nil
 	}
-	canVote, err := getCanVote(userID, battle)
+	username, err := getUsername(battle.UserID, usernames, usersRepository)
+	if err != nil {
+		return nil, err
+	}
+	canVote, err := getCanVote(userID, battleID, votesRepository)
 	if err != nil {
 		return nil, err
 	}
 	response := &Response{
 		ID:           battle.ID,
 		CreatedOn:    battle.CreatedOn,
-		Username:     battle.Username,
+		Username:     username,
 		Title:        battle.Title,
 		Description:  battle.Description,
 		CanVote:      canVote,
@@ -110,6 +138,40 @@ func CreateResponse(userID string, battleID string, repository battles.Repositor
 		Verdict:      determineVerdict(battle.CreatedOn, float64(battle.VotesFor), float64(battle.VotesAgainst)),
 	}
 	return response, nil
+}
+
+func getUsername(userID string, usernames map[string]string, usersRepository users.RepositoryInterface) (string, error) {
+	var username string
+	if usernames != nil {
+		username := usernames[userID]
+		if username != "" {
+			return username, nil
+		}
+	}
+	user, err := usersRepository.GetByID(userID)
+	if err != nil {
+		return "", err
+	}
+	if user != nil {
+		username = user.Username
+	} else {
+		username = deletedUsername
+	}
+	if usernames != nil {
+		usernames[userID] = username
+	}
+	return username, nil
+}
+
+func getCanVote(userID string, battleID string, votesRepository votes.RepositoryInterface) (bool, error) {
+	if userID == "" {
+		return false, nil
+	}
+	vote, err := votesRepository.GetByUserAndBattleIDs(userID, battleID)
+	if err != nil {
+		return false, err
+	}
+	return (vote == nil), nil
 }
 
 func determineVerdict(createdOn int64, votesFor float64, votesAgainst float64) int {
