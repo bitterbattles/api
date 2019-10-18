@@ -36,28 +36,10 @@ func TestProcessorNewComments(t *testing.T) {
 	verifyBattleComments(t, battlesRepository, "battleId0", 2)
 }
 
-func TestProcessorDeletedComment(t *testing.T) {
-	indexRepostiory := indexMocks.NewRepository()
-	setupIndexes(indexRepostiory, "id0", "battleId0", "userId0", 123)
-	indexer := comments.NewIndexer(indexRepostiory)
-	battlesRepository := battlesMocks.NewRepository()
-	processor := NewProcessor(indexer, battlesRepository)
-	eventJSON := `{"records":[{"dynamodb":{"OldImage":{"id":{"S":"id0"},"battleId":{"S":"battleId0"},"userId":{"S":"userId0"},"createdOn":{"N":"123"},"state":{"N":"1"}},"NewImage":{"id":{"S":"id0"},"battleId":{"S":"battleId0"},"userId":{"S":"userId0"},"createdOn":{"N":"123"},"state":{"N":"2"}}}}]}`
-	event := newEvent(eventJSON)
-	err := processor.Process(event)
-	AssertNil(t, err)
-	verifyIndexes(t, indexRepostiory, "id0", "battleId0", "userId0", 0)
-}
-
 func newEvent(eventJSON string) *stream.Event {
 	event := &stream.Event{}
 	json.Unmarshal([]byte(eventJSON), event)
 	return event
-}
-
-func setupIndexes(repository *indexMocks.Repository, commentID string, battleID string, userID string, score float64) {
-	repository.SetScore(fmt.Sprintf(battleKeyPattern, battleID), commentID, score)
-	repository.SetScore(fmt.Sprintf(authorKeyPattern, userID), commentID, score)
 }
 
 func verifyIndexes(t *testing.T, repository *indexMocks.Repository, commentID string, battleID string, userID string, expectedScore float64) {
