@@ -55,12 +55,24 @@ func GetPageSize(i *api.Input) int {
 // CreateResponses creates a list of GET comments responses
 func CreateResponses(
 	commentIDs []string,
+	includeDeleted bool,
 	commentsRepository comments.RepositoryInterface,
 	usersRepository users.RepositoryInterface) ([]*Response, error) {
 	responses := make([]*Response, 0, len(commentIDs))
 	usernames := make(map[string]string)
 	for _, commentID := range commentIDs {
-		response, err := createResponseWithUsernameMap(commentID, usernames, commentsRepository, usersRepository)
+		comment, err := commentsRepository.GetByID(commentID)
+		if err != nil {
+			return nil, err
+		}
+		if comment == nil {
+			log.Println("Comment with ID", commentID, "is either missing or deleted.")
+			continue
+		}
+		if comment.State == comments.Deleted && !includeDeleted {
+			continue
+		}
+		response, err := createResponseWithUsernameMap(comment, usernames, usersRepository)
 		if err != nil {
 			return nil, err
 		}
@@ -73,18 +85,7 @@ func CreateResponses(
 	return responses, nil
 }
 
-func createResponseWithUsernameMap(
-	commentID string,
-	usernames map[string]string,
-	commentsRepository comments.RepositoryInterface,
-	usersRepository users.RepositoryInterface) (*Response, error) {
-	comment, err := commentsRepository.GetByID(commentID)
-	if err != nil {
-		return nil, err
-	}
-	if comment == nil {
-		return nil, nil
-	}
+func createResponseWithUsernameMap(comment *comments.Comment, usernames map[string]string, usersRepository users.RepositoryInterface) (*Response, error) {
 	username, err := getUsername(comment.UserID, usernames, usersRepository)
 	if err != nil {
 		return nil, err

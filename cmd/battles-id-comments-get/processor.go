@@ -48,7 +48,7 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	if err != nil {
 		return nil, err
 	}
-	responses, err := commentsget.CreateResponses(commentIDs, processor.commentsRepository, processor.usersRepository)
+	responses, err := commentsget.CreateResponses(commentIDs, true, processor.commentsRepository, processor.usersRepository)
 	if err != nil {
 		return nil, err
 	}

@@ -72,7 +72,7 @@ func TestProcessorDeletedIndexEntry(t *testing.T) {
 	indexRepository := indexMocks.NewRepository()
 	commentsRepository := commentsMocks.NewRepository()
 	addComments(indexRepository, commentsRepository, testUserID, true, 1)
-	expectedResponse := `[{"id":"id0","battleId":"battleId0","createdOn":0,"username":"username0","comment":"[Deleted]"}]`
+	expectedResponse := `[]`
 	testProcessor(t, indexRepository, commentsRepository, "1", "2", expectedResponse)
 }
 
