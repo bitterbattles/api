@@ -28,12 +28,12 @@ func CreateResponse(userID string, accessTokenSecret string, refreshTokenSecret 
 	return response, nil
 }
 
-func createToken(userID string, expiresIn int, secret string) (string, error) {
+func createToken(userID string, expiresIn int64, secret string) (string, error) {
 	now := time.NowUnix()
 	authContext := &api.AuthContext{
 		UserID:    userID,
 		CreatedOn: now,
-		ExpiresOn: now + accessExpiresIn,
+		ExpiresOn: now + expiresIn,
 	}
 	return jwt.NewHS256(authContext, secret)
 }
