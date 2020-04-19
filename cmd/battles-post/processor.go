@@ -59,7 +59,6 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	battle := battles.Battle{
 		ID:          guid.New(),
 		UserID:      userID,
-		Username:    user.Username,
 		Title:       title,
 		Description: description,
 		CreatedOn:   time.NowUnix(),

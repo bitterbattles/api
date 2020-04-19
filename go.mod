@@ -1,5 +1,7 @@
 module github.com/bitterbattles/api
 
+go 1.14
+
 require (
 	github.com/aws/aws-lambda-go v1.8.2
 	github.com/aws/aws-sdk-go v1.17.3

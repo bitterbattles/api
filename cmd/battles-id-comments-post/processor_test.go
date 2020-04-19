@@ -65,7 +65,6 @@ func testProcessor(t *testing.T, commentText string, missingUser bool, expectedS
 		AssertNotNil(t, comment)
 		AssertEquals(t, comment.BattleID, battleID)
 		AssertEquals(t, comment.UserID, user.ID)
-		AssertEquals(t, comment.Username, user.Username)
 		AssertEquals(t, comment.Comment, commentText)
 		AssertEquals(t, comment.State, comments.Active)
 	} else {

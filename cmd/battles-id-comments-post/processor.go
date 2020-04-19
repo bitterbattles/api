@@ -57,7 +57,6 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 		ID:        guid.New(),
 		BattleID:  battleID,
 		UserID:    userID,
-		Username:  user.Username,
 		Comment:   commentText,
 		CreatedOn: time.NowUnix(),
 		State:     battles.Active,

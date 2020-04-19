@@ -70,7 +70,6 @@ func testProcessor(t *testing.T, title string, description string, missingUser b
 		AssertEquals(t, output.StatusCode, expectedStatusCode)
 		AssertNotNil(t, battle)
 		AssertEquals(t, battle.UserID, user.ID)
-		AssertEquals(t, battle.Username, user.Username)
 		AssertEquals(t, battle.Title, title)
 		AssertEquals(t, battle.Description, description)
 		AssertEquals(t, battle.State, battles.Active)
