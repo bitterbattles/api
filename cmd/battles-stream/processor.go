@@ -10,13 +10,15 @@ import (
 
 // Processor represents a stream event processor
 type Processor struct {
-	indexer *battles.Indexer
+	battlesIndex  battles.IndexInterface
+	battlesScorer *battles.Scorer
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(indexer *battles.Indexer) *Processor {
+func NewProcessor(battlesIndex battles.IndexInterface, battlesScorer *battles.Scorer) *Processor {
 	return &Processor{
-		indexer: indexer,
+		battlesIndex:  battlesIndex,
+		battlesScorer: battlesScorer,
 	}
 }
 
@@ -74,21 +76,17 @@ func (processor *Processor) processChange(change *change) {
 	}
 	if newBattle.State != oldBattle.State && newBattle.State == battles.Deleted {
 		// Deleted battle
-		err = processor.indexer.Delete(newBattle)
+		err = processor.battlesIndex.Delete(newBattle)
 		if err != nil {
-			log.Println("Failed to delete battle from indexes. Error:", err)
+			log.Println("Failed to delete battle from index. Error:", err)
 		}
-	} else if oldBattle.ID == "" {
-		// New battle
-		err = processor.indexer.Add(newBattle)
+	} else {
+		// New or updated battle
+		popularity := processor.battlesScorer.ScorePopularity(newBattle)
+		controversy := processor.battlesScorer.ScoreControversy(newBattle)
+		err = processor.battlesIndex.Upsert(newBattle, popularity, controversy)
 		if err != nil {
-			log.Println("Failed to add new battle to indexes. Error:", err)
-		}
-	} else if newBattle.VotesFor != oldBattle.VotesFor || newBattle.VotesAgainst != oldBattle.VotesAgainst {
-		// Battle votes changed
-		err = processor.indexer.UpdateVotes(newBattle)
-		if err != nil {
-			log.Println("Failed to update battle vote indexes. Error:", err)
+			log.Println("Failed to index battle. Error:", err)
 		}
 	}
 }

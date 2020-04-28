@@ -1,14 +1,12 @@
 package main_test
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/bitterbattles/api/cmd/comments-me-id-delete"
 	"github.com/bitterbattles/api/pkg/comments"
 	commentsMocks "github.com/bitterbattles/api/pkg/comments/mocks"
 	"github.com/bitterbattles/api/pkg/http"
-	indexMocks "github.com/bitterbattles/api/pkg/index/mocks"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	. "github.com/bitterbattles/api/pkg/tests"
 )
@@ -24,15 +22,14 @@ func TestProcessorAsAuthor(t *testing.T) {
 func testProcessor(t *testing.T, isAuthor bool) {
 	commentID := "commentId"
 	userID := "userId"
-	indexRepository := indexMocks.NewRepository()
-	if isAuthor {
-		key := fmt.Sprintf("commentIds:forAuthor:%s", userID)
-		indexRepository.SetScore(key, commentID, 1)
+	commentUserID := "userId"
+	if !isAuthor {
+		commentUserID = "otherUserId"
 	}
-	indexer := comments.NewIndexer(indexRepository)
 	commentsRepository := commentsMocks.NewRepository()
 	comment := comments.Comment{
-		ID: commentID,
+		ID:     commentID,
+		UserID: commentUserID,
 	}
 	commentsRepository.Add(&comment)
 	pathParams := make(map[string]string)
@@ -44,7 +41,7 @@ func testProcessor(t *testing.T, isAuthor bool) {
 		PathParams:  pathParams,
 		AuthContext: authContext,
 	}
-	processor := NewProcessor(indexer, commentsRepository)
+	processor := NewProcessor(commentsRepository)
 	output, err := processor.Process(input)
 	AssertNil(t, err)
 	AssertNotNil(t, output)

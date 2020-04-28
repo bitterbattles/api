@@ -33,9 +33,18 @@ Parameters:
   VotesTableWCUs:
     Type: Number
     Default: 1
-  RedisNodeType:
+  ElasticsearchInstanceType:
     Type: String
-    Default: cache.t2.micro
+    Default: "t2.small.elasticsearch"
+  ElasticsearchInstanceCount:
+    Type: Number
+    Default: 3
+  ElasticsearchVolumeType:
+    Type: String
+    Default: gp2
+  ElasticsearchVolumeSize:
+    Type: Number
+    Default: 10
   AccessTokenSecret:
     Type: String
   RefreshTokenSecret:
@@ -175,29 +184,35 @@ Resources:
           KeyType: RANGE
       StreamSpecification:
         StreamViewType: NEW_IMAGE
-  SubnetGroup:
-    Type: AWS::ElastiCache::SubnetGroup
-    Properties:
-      Description: A group of subnets for redis.
-      SubnetIds:
-        - !Ref Subnet0
-        - !Ref Subnet1
-        - !Ref Subnet2
-  Redis:
-    Type: AWS::ElastiCache::ReplicationGroup
-    Properties:
-      ReplicationGroupDescription: Multi-AZ redis cluster.
-      Engine: redis
-      CacheNodeType: !Ref RedisNodeType
-      AutomaticFailoverEnabled: !If [IsProd, true, false]
-      NumCacheClusters: !If [IsProd, 3, 1]
-      PreferredCacheClusterAZs:
-        - !Select [0, !GetAZs ""]
-        - !If [IsProd, !Select [1, !GetAZs ""], !Ref "AWS::NoValue"]
-        - !If [IsProd, !Select [2, !GetAZs ""], !Ref "AWS::NoValue"]
-      CacheSubnetGroupName: !Ref SubnetGroup
-      SecurityGroupIds:
-        - !GetAtt VPC.DefaultSecurityGroup
+  Elasticsearch:
+    Type: AWS::Elasticsearch::Domain
+    Properties: 
+      EBSOptions: 
+        EBSEnabled: true
+        VolumeSize: !Ref ElasticsearchVolumeSize
+        VolumeType: !Ref ElasticsearchVolumeType
+      ElasticsearchClusterConfig: 
+        InstanceCount: !Ref ElasticsearchInstanceCount
+        InstanceType: !Ref ElasticsearchInstanceType
+        ZoneAwarenessConfig: 
+          AvailabilityZoneCount: 3
+        ZoneAwarenessEnabled: true
+      ElasticsearchVersion: "7.4"
+      AccessPolicies:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: "*"
+            Action: "es:*"
+            Resource: "*"
+      VPCOptions: 
+        SecurityGroupIds:
+          - !GetAtt VPC.DefaultSecurityGroup
+        SubnetIds:
+          - !Ref Subnet0
+          - !Ref Subnet1
+          - !Ref Subnet2
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -252,7 +267,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   BattlesPostLambda:
@@ -274,7 +289,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   BattlesMeGetLambda:
@@ -296,7 +311,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   BattlesMeIdDeleteLambda:
@@ -318,7 +333,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   BattlesIdDeleteLambda:
@@ -340,7 +355,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   BattlesIdGetLambda:
@@ -362,7 +377,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   BattlesIdCommentsGetLambda:
@@ -384,7 +399,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   BattlesIdCommentsPostLambda:
@@ -406,7 +421,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   BattlesStreamLambda:
@@ -428,7 +443,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   BattlesStreamTrigger:
@@ -458,7 +473,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   CommentsMeIdDeleteLambda:
@@ -480,7 +495,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   CommentsStreamLambda:
@@ -502,7 +517,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   CommentsStreamTrigger:
@@ -532,7 +547,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   RefreshesPostLambda:
@@ -554,7 +569,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   UsersPostLambda:
@@ -576,7 +591,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   UsersMeDeleteLambda:
@@ -598,7 +613,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   VotesPostLambda:
@@ -620,7 +635,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   VotesStreamLambda:
@@ -642,7 +657,7 @@ Resources:
           - !GetAtt VPC.DefaultSecurityGroup
       Environment:
         Variables:
-          REDIS_ADDRESS: !Join ["", [!GetAtt Redis.PrimaryEndPoint.Address, ":", !GetAtt Redis.PrimaryEndPoint.Port]]
+          ELASTICSEARCH_ADDRESS: !Join ["", ["https://", !GetAtt Elasticsearch.DomainEndpoint]]
           ACCESS_TOKEN_SECRET: !Ref AccessTokenSecret
           REFRESH_TOKEN_SECRET: !Ref RefreshTokenSecret
   VotesStreamTrigger:

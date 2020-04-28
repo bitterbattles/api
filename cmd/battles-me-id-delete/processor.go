@@ -12,14 +12,12 @@ const (
 
 // Processor represents a request processor
 type Processor struct {
-	indexer    *battles.Indexer
 	repository battles.RepositoryInterface
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(indexer *battles.Indexer, repository battles.RepositoryInterface) *Processor {
+func NewProcessor(repository battles.RepositoryInterface) *Processor {
 	return &Processor{
-		indexer:    indexer,
 		repository: repository,
 	}
 }
@@ -33,11 +31,11 @@ func (processor *Processor) NewRequestBody() interface{} {
 func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	userID := input.AuthContext.UserID
 	battleID := input.PathParams[idParam]
-	isAuthor, err := processor.indexer.IsBattleAuthor(userID, battleID)
+	battle, err := processor.repository.GetByID(battleID)
 	if err != nil {
 		return nil, err
 	}
-	if !isAuthor {
+	if battle == nil || battle.UserID != userID {
 		output := api.NewOutputWithStatus(http.NotFound, nil)
 		return output, nil
 	}

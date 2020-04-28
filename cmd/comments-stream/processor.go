@@ -11,15 +11,15 @@ import (
 
 // Processor represents a stream event processor
 type Processor struct {
-	indexer    *comments.Indexer
-	repository battles.RepositoryInterface
+	commentsIndex     comments.IndexInterface
+	battlesRepository battles.RepositoryInterface
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(indexer *comments.Indexer, repository battles.RepositoryInterface) *Processor {
+func NewProcessor(commentsIndex comments.IndexInterface, battlesRepository battles.RepositoryInterface) *Processor {
 	return &Processor{
-		indexer:    indexer,
-		repository: repository,
+		commentsIndex:     commentsIndex,
+		battlesRepository: battlesRepository,
 	}
 }
 
@@ -72,12 +72,12 @@ func (processor *Processor) captureChanges(record *stream.EventRecord, newBattle
 
 func (processor *Processor) processNewComments(battleID string, newComments []*comments.Comment) {
 	for _, comment := range newComments {
-		err := processor.indexer.Add(comment)
+		err := processor.commentsIndex.Upsert(comment)
 		if err != nil {
 			log.Println("Failed to add new comment to indexes. Error:", err)
 		}
 	}
-	err := processor.repository.IncrementComments(battleID, len(newComments))
+	err := processor.battlesRepository.IncrementComments(battleID, len(newComments))
 	if err != nil {
 		log.Println("Failed to increment Battle comments. Error:", err)
 	}

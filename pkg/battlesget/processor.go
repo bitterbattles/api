@@ -13,16 +13,19 @@ import (
 )
 
 const (
-	sortParam       = "sort"
-	pageParam       = "page"
-	pageSizeParam   = "pageSize"
-	defaultSort     = battles.RecentSort
-	minPage         = 1
-	defaultPage     = 1
-	minPageSize     = 1
-	maxPageSize     = 100
-	defaultPageSize = 50
-	deletedUsername = "[Deleted]"
+	sortParam         = "sort"
+	pageParam         = "page"
+	pageSizeParam     = "pageSize"
+	recentSort        = "recent"
+	popularSort       = "popular"
+	controversialSort = "controversial"
+	defaultSort       = recentSort
+	minPage           = 1
+	defaultPage       = 1
+	minPageSize       = 1
+	maxPageSize       = 100
+	defaultPageSize   = 50
+	deletedUsername   = "[Deleted]"
 )
 
 // GetSort gets and sanitizes the sort param from a GET request
@@ -31,7 +34,7 @@ func GetSort(i *api.Input) string {
 	rules := input.StringRules{
 		ToLower:      true,
 		TrimSpace:    true,
-		ValidValues:  []string{battles.RecentSort, battles.PopularSort, battles.ControversialSort},
+		ValidValues:  []string{recentSort, popularSort, controversialSort},
 		DefaultValue: defaultSort,
 	}
 	sort, _ = input.SanitizeString(sort, rules, nil)

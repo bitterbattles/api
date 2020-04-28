@@ -1,14 +1,12 @@
 package main_test
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/bitterbattles/api/cmd/battles-me-id-delete"
 	"github.com/bitterbattles/api/pkg/battles"
 	battlesMocks "github.com/bitterbattles/api/pkg/battles/mocks"
 	"github.com/bitterbattles/api/pkg/http"
-	indexMocks "github.com/bitterbattles/api/pkg/index/mocks"
 	"github.com/bitterbattles/api/pkg/lambda/api"
 	. "github.com/bitterbattles/api/pkg/tests"
 )
@@ -24,15 +22,14 @@ func TestProcessorAsAuthor(t *testing.T) {
 func testProcessor(t *testing.T, isBattleAuthor bool) {
 	battleID := "battleId"
 	userID := "userId"
-	indexRepository := indexMocks.NewRepository()
-	if isBattleAuthor {
-		key := fmt.Sprintf("battleIds:forAuthor:%s:recent", userID)
-		indexRepository.SetScore(key, battleID, 1)
+	battleUserID := "userId"
+	if !isBattleAuthor {
+		battleUserID = "otherUserId"
 	}
-	indexer := battles.NewIndexer(indexRepository)
 	battlesRepository := battlesMocks.NewRepository()
 	battle := battles.Battle{
-		ID: battleID,
+		ID:     battleID,
+		UserID: battleUserID,
 	}
 	battlesRepository.Add(&battle)
 	pathParams := make(map[string]string)
@@ -44,7 +41,7 @@ func testProcessor(t *testing.T, isBattleAuthor bool) {
 		PathParams:  pathParams,
 		AuthContext: authContext,
 	}
-	processor := NewProcessor(indexer, battlesRepository)
+	processor := NewProcessor(battlesRepository)
 	output, err := processor.Process(input)
 	AssertNil(t, err)
 	AssertNotNil(t, output)

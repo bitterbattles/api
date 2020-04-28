@@ -8,19 +8,17 @@ import (
 	"github.com/bitterbattles/api/pkg/battles"
 	"github.com/bitterbattles/api/pkg/comments"
 	"github.com/bitterbattles/api/pkg/dynamo"
-	"github.com/bitterbattles/api/pkg/index"
+	"github.com/bitterbattles/api/pkg/elasticsearch"
 	"github.com/bitterbattles/api/pkg/lambda/stream"
-	"github.com/bitterbattles/api/pkg/redis"
 )
 
 func main() {
-	redisClient := redis.NewClient(os.Getenv("REDIS_ADDRESS"))
-	indexRepository := index.NewRepository(redisClient)
-	indexer := comments.NewIndexer(indexRepository)
+	esClient := elasticsearch.NewClient(os.Getenv("ELASTICSEARCH_ADDRESS"))
+	commentsIndex := comments.NewIndex(esClient)
 	session := aws.NewSession(os.Getenv("AWS_REGION"))
 	dynamoClient := dynamo.NewClient(session)
 	battlesRepository := battles.NewRepository(dynamoClient)
-	processor := NewProcessor(indexer, battlesRepository)
+	processor := NewProcessor(commentsIndex, battlesRepository)
 	handler := stream.NewHandler(processor)
 	lambda.StartHandler(handler)
 }

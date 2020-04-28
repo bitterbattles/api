@@ -10,7 +10,7 @@ import (
 
 // Processor represents a request processor
 type Processor struct {
-	indexer           *battles.Indexer
+	battlesIndex      battles.IndexInterface
 	battlesRepository battles.RepositoryInterface
 	usersRepository   users.RepositoryInterface
 	votesRepository   votes.RepositoryInterface
@@ -18,12 +18,12 @@ type Processor struct {
 
 // NewProcessor creates a new Processor instance
 func NewProcessor(
-	indexer *battles.Indexer,
+	battlesIndex battles.IndexInterface,
 	battlesRepository battles.RepositoryInterface,
 	usersRepository users.RepositoryInterface,
 	votesRepository votes.RepositoryInterface) *Processor {
 	return &Processor{
-		indexer:           indexer,
+		battlesIndex:      battlesIndex,
 		battlesRepository: battlesRepository,
 		usersRepository:   usersRepository,
 		votesRepository:   votesRepository,
@@ -40,7 +40,7 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	sort := battlesget.GetSort(input)
 	page := battlesget.GetPage(input)
 	pageSize := battlesget.GetPageSize(input)
-	battleIDs, err := processor.indexer.GetGlobal(sort, page, pageSize)
+	battleIDs, err := processor.battlesIndex.GetGlobal(sort, page, pageSize)
 	if err != nil {
 		return nil, err
 	}

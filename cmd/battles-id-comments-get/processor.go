@@ -20,15 +20,15 @@ const (
 
 // Processor represents a request processor
 type Processor struct {
-	indexer            *comments.Indexer
+	commentsIndex      comments.IndexInterface
 	commentsRepository comments.RepositoryInterface
 	usersRepository    users.RepositoryInterface
 }
 
 // NewProcessor creates a new Processor instance
-func NewProcessor(indexer *comments.Indexer, commentsRepository comments.RepositoryInterface, usersRepository users.RepositoryInterface) *Processor {
+func NewProcessor(commentsIndex comments.IndexInterface, commentsRepository comments.RepositoryInterface, usersRepository users.RepositoryInterface) *Processor {
 	return &Processor{
-		indexer:            indexer,
+		commentsIndex:      commentsIndex,
 		commentsRepository: commentsRepository,
 		usersRepository:    usersRepository,
 	}
@@ -44,7 +44,7 @@ func (processor *Processor) Process(input *api.Input) (*api.Output, error) {
 	battleID := input.PathParams[idParam]
 	page := commentsget.GetPage(input)
 	pageSize := commentsget.GetPageSize(input)
-	commentIDs, err := processor.indexer.GetByBattle(battleID, page, pageSize)
+	commentIDs, err := processor.commentsIndex.GetByBattle(battleID, page, pageSize)
 	if err != nil {
 		return nil, err
 	}
