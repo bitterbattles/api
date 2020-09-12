@@ -129,6 +129,7 @@ func (handler *Handler) newResponse(output *Output) ([]byte, error) {
 		}
 		body = string(bodyBytes)
 		headers = make(map[string]string)
+		headers[http.AccessControlAllowOrigin] = "*"
 		headers[http.ContentType] = http.ApplicationJSON
 	}
 	response := &http.Response{

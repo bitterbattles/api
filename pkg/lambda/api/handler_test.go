@@ -13,7 +13,7 @@ import (
 )
 
 var testHeaders = map[string]string{
-	"authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTUxOTIwNDkyfQ.mqRcs_KtFzvygi1gZ-SVZ68Cqu1pteXPPz7SOGPkitA",
+	"authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VySWQiLCJpYXQiOjE1NTE5MjA0OTIsImV4cCI6NDc1NTU1MjgwN30.RDlto1SRXTsX1Gvi3vTaJs5itLadm2KAu1vQVFoqPuw",
 	"content-type":  "application/json",
 }
 
@@ -103,13 +103,13 @@ func TestHandlerMalformedAuth(t *testing.T) {
 		"Authorization": "invalid",
 	}
 	request := &http.Request{Headers: headers}
-	expectedBody := `{"errorCode":403,"errorMessage":"Malformed authorization header."}`
+	expectedBody := `{"errorCode":403,"errorMessage":"Malformed Authorization header."}`
 	testHandler(t, handler, request, http.Forbidden, expectedBody)
 }
 
 func TestHandlerBadToken(t *testing.T) {
 	processor := &testProcessor{}
-	handler := NewHandler(true, "", processor)
+	handler := NewHandler(true, "tokenSecret", processor)
 	headers := map[string]string{
 		"Authorization": "Bearer invalid",
 	}
@@ -118,9 +118,20 @@ func TestHandlerBadToken(t *testing.T) {
 	testHandler(t, handler, request, http.Forbidden, expectedBody)
 }
 
+func TestHandlerExpiredToken(t *testing.T) {
+	processor := &testProcessor{}
+	handler := NewHandler(true, "tokenSecret", processor)
+	headers := map[string]string{
+		"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VySWQiLCJpYXQiOjE1NTE5MjA0OTIsImV4cCI6MTU1MTkyMDQ5M30.tLUDq1svsmPySqdg_pTjn68fD8ETjSDX626xi-CV5dM",
+	}
+	request := &http.Request{Headers: headers}
+	expectedBody := `{"errorCode":403,"errorMessage":"Expired token."}`
+	testHandler(t, handler, request, http.Forbidden, expectedBody)
+}
+
 func TestHandlerMissingBody(t *testing.T) {
 	processor := &testProcessor{requireBody: true}
-	handler := NewHandler(false, "", processor)
+	handler := NewHandler(false, "tokenSecret", processor)
 	request := &http.Request{}
 	expectedBody := `{"errorCode":400,"errorMessage":"Request body is required."}`
 	testHandler(t, handler, request, http.BadRequest, expectedBody)
@@ -128,7 +139,7 @@ func TestHandlerMissingBody(t *testing.T) {
 
 func TestHandlerBadContentType(t *testing.T) {
 	processor := &testProcessor{requireBody: true}
-	handler := NewHandler(false, "", processor)
+	handler := NewHandler(false, "tokenSecret", processor)
 	request := &http.Request{Body: "body"}
 	expectedBody := `{"errorCode":415,"errorMessage":"Only JSON content type is accepted."}`
 	testHandler(t, handler, request, http.UnsupportedMediaType, expectedBody)
@@ -136,7 +147,7 @@ func TestHandlerBadContentType(t *testing.T) {
 
 func TestHandlerBadBodyJSON(t *testing.T) {
 	processor := &testProcessor{requireBody: true}
-	handler := NewHandler(false, "", processor)
+	handler := NewHandler(false, "tokenSecret", processor)
 	request := &http.Request{Headers: testHeaders, Body: "body"}
 	expectedBody := `{"errorCode":400,"errorMessage":"Failed to decode request body."}`
 	testHandler(t, handler, request, http.BadRequest, expectedBody)
@@ -144,7 +155,7 @@ func TestHandlerBadBodyJSON(t *testing.T) {
 
 func TestHandlerExpectedError(t *testing.T) {
 	processor := &testProcessor{returnHTTPError: true}
-	handler := NewHandler(false, "", processor)
+	handler := NewHandler(false, "tokenSecret", processor)
 	request := &http.Request{Headers: testHeaders}
 	expectedBody := `{"errorCode":400,"errorMessage":"Bad request."}`
 	testHandler(t, handler, request, http.BadRequest, expectedBody)
@@ -152,7 +163,7 @@ func TestHandlerExpectedError(t *testing.T) {
 
 func TestHandlerUnexpectedError(t *testing.T) {
 	processor := &testProcessor{returnUnexpectedError: true}
-	handler := NewHandler(false, "", processor)
+	handler := NewHandler(false, "tokenSecret", processor)
 	request := &http.Request{Headers: testHeaders}
 	expectedBody := `{"errorCode":500,"errorMessage":"Something unexpected happened. Please try again later."}`
 	testHandler(t, handler, request, http.InternalServerError, expectedBody)
@@ -160,7 +171,7 @@ func TestHandlerUnexpectedError(t *testing.T) {
 
 func TestHandlerPanic(t *testing.T) {
 	processor := &testProcessor{panic: true}
-	handler := NewHandler(false, "", processor)
+	handler := NewHandler(false, "tokenSecret", processor)
 	request := &http.Request{Headers: testHeaders}
 	expectedBody := `{"errorCode":500,"errorMessage":"Something unexpected happened. Please try again later."}`
 	testHandler(t, handler, request, http.InternalServerError, expectedBody)
@@ -168,7 +179,7 @@ func TestHandlerPanic(t *testing.T) {
 
 func TestHandlerMissingOutput(t *testing.T) {
 	processor := &testProcessor{returnNilResponse: true}
-	handler := NewHandler(false, "", processor)
+	handler := NewHandler(false, "tokenSecret", processor)
 	request := &http.Request{Headers: testHeaders}
 	expectedBody := `{"errorCode":500,"errorMessage":"Something unexpected happened. Please try again later."}`
 	testHandler(t, handler, request, http.InternalServerError, expectedBody)
@@ -191,6 +202,7 @@ func testHandler(t *testing.T, handler *Handler, request *http.Request, expected
 	err = json.Unmarshal(responseBytes, &response)
 	AssertNil(t, err)
 	AssertEquals(t, response.StatusCode, expectedStatusCode)
+	AssertEquals(t, response.Headers[http.AccessControlAllowOrigin], "*")
 	AssertEquals(t, response.Headers[http.ContentType], http.ApplicationJSON)
 	AssertEquals(t, response.Body, expectedBody)
 }

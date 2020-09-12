@@ -2,6 +2,7 @@ package http
 
 // HTTP headers
 const (
-	Authorization = "Authorization"
-	ContentType   = "Content-Type"
+	Authorization            = "Authorization"
+	AccessControlAllowOrigin = "Access-Control-Allow-Origin"
+	ContentType              = "Content-Type"
 )
